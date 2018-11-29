@@ -14,10 +14,11 @@ const token = '123';
 // loadCategories (whether or not to automatically load categories inside the commands folder, defaults to 'true')
 // clientOptions (the options to directly pass into the require('discord.js').Client class)
 // Returns the client object.
-handler(__dirname + '/commands', token)
-	.on('ready', () => {
-		console.log(client.user.username + ' has successfully booted up.');
-	});
+let client = handler(__dirname + '/commands', token);
+
+client.on('ready', () => {
+	console.log(client.user.username + ' has successfully booted up.');
+});
 
 // commands/ping.js
 
