@@ -5,7 +5,7 @@ A quite simple command handler for the [discord.js](https://discord.js.org) depe
 ```js
 // Your launch file (commonly named index.js or bot.js).
 
-const handler = require('discord.js-command-handler');
+const handler = require('d.js-command-handler');
 const token = '123';
 
 // A third parameter can also be supplied, resembling the ClientOptions, normally passed into the Client class.
