@@ -38,10 +38,23 @@ class Call {
 	}
 }
 
-function handler(location, token, { customPrefix = '!', loadCategories = true, clientOptions } = {}) {
+/**
+ * @typedef HandlerOptions
+ * @property {string|function(message): string='!'} customPrefix The function or string determining the prefix.
+ * @property {boolean=true} loadCategories Whether or not to load commands inside folders inside the commands folder.
+ * @property {ClientOptions} clientOptions The options to put directly into the Client object.
+ */
+
+/**
+ * The function to call to launch the command handler.
+ * @param {string} location The path leading to the commands folder.
+ * @param {string|require('discord.js').Client} token The token of the client. If a client option is passed, it will instead use that client.
+ * @param {HandlerOptions} options The options to supply to the function. 
+ */
+function handler(location, token, { customPrefix = '!', loadCategories = true, allowBots = false, clientOptions } = {}) {
 	determinePrefix = typeof customPrefix === 'function' ? customPrefix : () => customPrefix;
 
-	let client = new Client(clientOptions);
+	let client = token instanceof Client ? token : new Client(clientOptions);
 	let commands = new Collection();
 
 	load(commands, location);
@@ -52,7 +65,7 @@ function handler(location, token, { customPrefix = '!', loadCategories = true, c
 				load(commands, location + '/' + folder);
 
 	client.on('message', async (message) => {
-		if (!(message instanceof Message))
+		if (!(message instanceof Message) || (message.author.bot && !allowBots))
 			return;
 
 		let prefix = await determinePrefix(message);
@@ -85,7 +98,8 @@ function handler(location, token, { customPrefix = '!', loadCategories = true, c
 		command.exec(new Call(message, command, commands, cut, args, prefixUsed, aliasUsed));
 	});
 
-	client.login(token);
+	if (!(token instanceof Client))
+		client.login(token);
 
 	return client;
 }
