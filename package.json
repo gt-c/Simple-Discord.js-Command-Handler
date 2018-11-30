@@ -1,12 +1,12 @@
 {
 	"name": "d.js-command-handler",
-	"version": "1.0.2",
+	"version": "1.0.3",
 	"description": "A simple command handler for discord.js.",
 	"main": "index.js",
 	"scripts": {
-	  "test": "eslint . && eslint test/. --env mocha && mocha",
+	  "test": "eslint .",
 	  "start": "node index.js",
-	  "fix": "eslint . --fix && eslint test/. --env mocha --fix"
+	  "fix": "eslint . --fix"
 	},
 	"keywords": [
 		"discord.js",
@@ -21,5 +21,9 @@
 	"license": "ISC",
 	"dependencies": {
 	  "discord.js": "^11.4.2"
-	}
+	},
+	"devDependencies": {
+		"babel-eslint": "^8.2.6",
+		"eslint": "^4.19.1"
+	  }
   }

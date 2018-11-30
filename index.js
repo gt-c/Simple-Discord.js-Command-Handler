@@ -3,7 +3,7 @@ const { Client, Message, Collection } = require('discord.js');
 
 function load(commands, path) {
 	for (let file of fs.readdirSync(path)) {
-		try {	
+		try {
 			let command = require(path + '/' + file);
 
 			if (typeof command.id !== 'string' || typeof command.exec !== 'function')
@@ -16,7 +16,8 @@ function load(commands, path) {
 
 			commands.set(command.id.toLowerCase(), command);
 		} catch (err) {
-			console.warn(file + ' command failed to load.\n', err.stack);
+			if (!err.message.startsWith('Cannot find module'))
+				console.warn(file + ' command failed to load.\n', err.stack);
 		}
 	}
 }
@@ -49,11 +50,10 @@ class Call {
  * The function to call to launch the command handler.
  * @param {string} location The path leading to the commands folder.
  * @param {string|require('discord.js').Client} token The token of the client. If a client option is passed, it will instead use that client.
- * @param {HandlerOptions} options The options to supply to the function. 
+ * @param {HandlerOptions} options The options to supply to the function.
  */
 function handler(location, token, { customPrefix = '!', loadCategories = true, allowBots = false, clientOptions } = {}) {
-	determinePrefix = typeof customPrefix === 'function' ? customPrefix : () => customPrefix;
-
+	let determinePrefix = typeof customPrefix === 'function' ? customPrefix : () => customPrefix;
 	let client = token instanceof Client ? token : new Client(clientOptions);
 	let commands = new Collection();
 
@@ -74,7 +74,7 @@ function handler(location, token, { customPrefix = '!', loadCategories = true, a
 			return;
 
 		let prefixUsed = message.content.match(new RegExp('^<@!?' + client.user.id + '>|' + escapeRegExpChars(prefix)));
-		
+
 		if (prefixUsed == null)
 			return;
 		else
@@ -89,7 +89,9 @@ function handler(location, token, { customPrefix = '!', loadCategories = true, a
 		let aliasUsed = args[0].toLowerCase();
 		let command = commands.find((cmd) => aliasUsed.toLowerCase() === cmd.id || cmd.aliases.includes(aliasUsed));
 
-		if (command == null)
+		if (command == null ||
+			(command.channels === 'dm' && message.channel.type !== 'dm') ||
+			(command.channels === 'guild' && message.channel.type !== 'text'))
 			return;
 
 		args.shift();

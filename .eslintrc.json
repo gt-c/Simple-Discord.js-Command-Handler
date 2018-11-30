@@ -1,0 +1,42 @@
+{
+	"env": {
+		"es6": true,
+		"node": true
+	},
+	"extends": "eslint:recommended",
+	"parser": "babel-eslint",
+	"parserOptions": {
+		"sourceType": "module"
+	},
+	"rules": {
+		"max-len": [
+			"error", {
+				"code": 150
+			}
+		],
+		"indent": [
+			"error",
+			"tab",
+			{
+				"SwitchCase": 1
+			}
+		],
+		"no-trailing-spaces": [
+			"error"
+		],
+		"space-before-blocks": "error",
+		"keyword-spacing": "error",
+		"arrow-spacing": "error",
+		"comma-spacing": "error",
+		"quotes": [
+			"error",
+			"single"
+		],
+		"semi": [
+			"error",
+			"always"
+		],
+		"arrow-parens": ["error", "always"],
+		"no-console": "off"
+	}
+}
