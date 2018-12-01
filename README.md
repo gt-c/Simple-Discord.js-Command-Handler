@@ -7,10 +7,11 @@ Launch your bot along with the handler.
 const handler = require('d.js-command-handler');
 const token = 'abc123';
 
-let client = handler(__dirname + '/commands', token, { customPrefix: '-', clientOptions: { disableEveryone: true } });
+let client = handler(`${__dirname}/commands`, token, { customPrefix: '-', clientOptions: { disableEveryone: true } });
 
 client.on('ready', () => {
-	console.log(client.user.username + ' has successfully booted up.');
+	console.log(`${client.user.username} has successfully booted up.`);
+	console.log(`Connected as ${client.user.tag}`)
 });
 ```
 Login when you choose (supply a Client instance instead of a token).
@@ -22,10 +23,11 @@ const token = 'abc123';
 let client = new Client({ disableEveryone: true });
 
 client.on('ready', () => {
-	console.log(client.user.username + ' has successfully booted up.');
+	console.log(`${client.user.username} has successfully booted up.`);
+	console.log(`Connected as ${client.user.tag}`)
 });
 
-handler(__dirname + '/commands', client, { customPrefix: '-' });
+handler(`${__dirname}/commands`, client, { customPrefix: '-' });
 
 client.login(token);
 ```
@@ -39,7 +41,7 @@ module.exports = {
 	channels: 'dm', // defaults to 'any'. options are: 'dm', 'guild', 'any'.
 	// 'call' is an instance of the Call class, a class containing various properties and utility functions.
 	exec: (call) => {
-		call.message.channel.send('Pong! ' + Math.round(call.client.ping) + 'ms D-API delay.');
+		call.message.channel.send(`Pong! ${Math.round(call.client.ping)} ms D-API delay.`);
 	}
 };
 ```
