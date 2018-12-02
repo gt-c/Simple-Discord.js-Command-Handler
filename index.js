@@ -26,6 +26,70 @@ function escapeRegExpChars(text) {
 	return text.replace(/[|\\{}()[\]^$+*?.]/g, '\\$&');
 }
 
+class Prompt {
+	constructor(user, channel, options, resolve, reject) {
+		this.user = user;
+		this.channel = channel;
+		this.options = options;
+		this.resolve = resolve;
+		this.reject = reject;
+
+		this.ended = false;
+		this.attempts = 0;
+		this.values = new Collection();
+
+		this.user.client.setTimeout(this.endPrompt.bind(this, 'time'), options.time <= 0 ? Infinity : options.time);
+	}
+
+	addInput(message) {
+		if (this.ended)
+			return;
+
+		this.attempts++;
+
+		// If cancelled.
+		if (this.options.cancellable && message.content.toLowerCase() === 'cancel')
+			return this.endPrompt('cancelled');
+
+		// Add value to result.
+		if (this.options.filter(message, this))
+			this.values.set(message.id, message);
+		// Corrects user on invalid input.
+		else
+			this.options.correct(message, this);
+
+		// Resolve if messages required obtained.
+		if (this.values.size >= this.options.messages)
+			return this.endPrompt('success');
+
+		// Attempts surpassed.
+		if (this.options.attempts > 0 && this.attempts >= this.options.attempts)
+			return this.endPrompt('attempts');
+	}
+
+	endPrompt(reason) {
+		if (this.ended)
+			return;
+
+		this.ended = true;
+		handler.prompts.delete(this.user.id);
+
+		// If permitted to respond.
+		if (this.options.autoRespond) {
+			if (['time', 'cancelled'].includes(reason))
+				this.channel.send('Cancelled prompt.');
+
+			if (reason === 'attempts')
+				this.channel.send('Too many attempts.');
+		}
+
+		if (reason !== 'success')
+			return this.reject(new Error('Prompt ended: ' + reason));
+
+		return this.resolve(this.values.size > 1 ? this.values : this.values.first());
+	}
+}
+
 class Call {
 	constructor(message, command, commands, cut, args, prefixUsed, aliasUsed) {
 		this.message = message;
@@ -37,22 +101,39 @@ class Call {
 		this.aliasUsed = aliasUsed;
 		this.cut = cut;
 	}
+
+	// Intentionally avoid MessageCollector's so not to cause confusion to the developer if a possible EventEmitter memory leak occurs.
+	async prompt(msg,
+		{
+			filter = () => true,
+			correct = () => {},
+			cancellable = true,
+			autoRespond = true,
+			invisible = false,
+			time = 180000,
+			messages = 1,
+			attempts = 10
+		} = {}) {
+
+		if (msg)
+			await this.message.channel.send(...(Array.isArray(msg) ? msg : [msg]));
+
+		return new Promise((resolve, reject) => {
+			handler.prompts.set(this.message.author.id, new Prompt(this.message.author, this.message.channel,
+				{ filter, correct, cancellable, autoRespond, invisible, time, messages, attempts }, resolve, reject));
+		});
+	}
 }
 
-/**
- * @typedef HandlerOptions
- * @property {string|function(message): string='!'} customPrefix The function or string determining the prefix.
- * @property {boolean=true} loadCategories Whether or not to load commands inside folders inside the commands folder.
- * @property {ClientOptions} clientOptions The options to put directly into the Client object.
- */
+function handler(location, token,
+	{
+		customPrefix = '!',
+		onError = (_, command, exc) => console.warn('The ' + command.id + ' command encountered an error:\n' + exc.stack),
+		loadCategories = true,
+		allowBots = false,
+		clientOptions
+	} = {}) {
 
-/**
- * The function to call to launch the command handler.
- * @param {string} location The path leading to the commands folder.
- * @param {string|require('discord.js').Client} token The token of the client. If a client option is passed, it will instead use that client.
- * @param {HandlerOptions} options The options to supply to the function.
- */
-function handler(location, token, { customPrefix = '!', loadCategories = true, allowBots = false, clientOptions } = {}) {
 	let determinePrefix = typeof customPrefix === 'function' ? customPrefix : () => customPrefix;
 	let client = token instanceof Client ? token : new Client(clientOptions);
 	let commands = new Collection();
@@ -65,6 +146,11 @@ function handler(location, token, { customPrefix = '!', loadCategories = true, a
 				load(commands, location + '/' + folder);
 
 	client.on('message', async (message) => {
+		let prompt = handler.prompts.get(message.author.id);
+
+		if (prompt && !prompt.invisible && prompt.channel.id === message.channel.id)
+			return prompt.addInput(message);
+
 		if (!(message instanceof Message) || (message.author.bot && !allowBots))
 			return;
 
@@ -97,7 +183,11 @@ function handler(location, token, { customPrefix = '!', loadCategories = true, a
 		args.shift();
 		cut.substring(aliasUsed.length).trim();
 
-		command.exec(new Call(message, command, commands, cut, args, prefixUsed, aliasUsed));
+		try {
+			command.exec(new Call(message, command, commands, cut, args, prefixUsed, aliasUsed));
+		} catch (exc) {
+			onError(message, command, exc);
+		}
 	});
 
 	if (!(token instanceof Client))
@@ -107,5 +197,7 @@ function handler(location, token, { customPrefix = '!', loadCategories = true, a
 }
 
 handler.Call = Call;
+handler.Prompt = Prompt;
+handler.prompts = new Collection();
 
 module.exports = handler;
