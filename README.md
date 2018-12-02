@@ -51,6 +51,7 @@ Parameters:
 - `path` A string representing the path to the commands folder.
 - `client` A token to create a Client instance and login with, or a pre-existing Client instance to use.
 - `options` Options to use with the handle function. [See here](#handle-options).
+
 Properties (static):
 - `Call` The Call class.
 
