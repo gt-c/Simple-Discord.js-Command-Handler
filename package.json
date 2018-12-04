@@ -18,7 +18,7 @@
 		"url": "git+https://github.com/gt-c/Simple-Discord.js-Command-Handler"
   	},
 	"author": "gt_c#7841",
-	"license": "ISC",
+	"license": "SEE LICENSE IN LICENSE.md",
 	"dependencies": {
 	  "discord.js": "^11.4.2"
 	},
