@@ -1,20 +1,63 @@
 const fs = require('fs');
 const { Client, Message, Collection } = require('discord.js');
 
-function load(commands, path) {
+function defaults(obj, objDef) {
+	for (let [name, prop] of Object.entries(objDef))
+		if (!(name in obj))
+			obj[name] = prop;
+
+	return obj;
+}
+
+function getObjVal(obj, str) {
+	str = str.replace(/\[(\w+)\]/g, '.$1').replace(/^\./, '');
+
+	let arr = str.split('.');
+
+	for (let prop of arr) {
+		if (prop in obj)
+			obj = obj[prop];
+		else
+			return;
+	}
+
+	return obj;
+}
+
+function defObj(obj, str, val) {
+	str = str.replace(/\[(\w+)\]/g, '.$1').replace(/^\./, '');
+
+	let arr = str.split('.');
+
+	for (let prop of arr)
+		if (prop in obj && typeof obj[prop] === 'object')
+			obj = obj[prop];
+
+	obj[arr[arr.length - 1]] = val(obj[arr[arr.length - 1]]);
+
+	return obj[arr[arr.length - 1]];
+}
+
+function load(commands, path, customProps) {
 	for (let file of fs.readdirSync(path)) {
 		try {
 			let command = require(path + '/' + file);
 
-			if (typeof command.id !== 'string' || typeof command.exec !== 'function')
-				throw new TypeError('Either command.id or command.exec are not their proper values.');
+			let id = defObj(command, customProps.id, (id) => id || undefined);
+			let exec = defObj(command, customProps.exec, (exec) => exec || undefined);
 
-			command.aliases = Array.isArray(command.aliases) ?
-				command.aliases.filter((alias) => typeof alias === 'string').map((alias) => alias.toLowerCase()) :
-				[];
-			command.channels = ['any', 'dm', 'guild'].includes(command.channels) ? command.channels : 'any';
+			if (typeof id !== 'string' ||
+				typeof exec !== 'function')
+				throw new TypeError('Either command.' + customProps.id + ' or command.' + customProps.exec + ' are not their proper values.');
 
-			commands.set(command.id.toLowerCase(), command);
+			defObj(command, customProps.aliases,
+				(aliases) => Array.isArray(aliases) ?
+					aliases.filter((alias) => typeof alias === 'string').map((alias) => alias.toLowerCase()) :
+					[]);
+			defObj(command, customProps.channels,
+				(channels) => ['any', 'dm', 'guild'].includes(channels) ? channels : 'any');
+
+			commands.set(id.toLowerCase(), command);
 		} catch (err) {
 			if (!err.message.startsWith('Cannot find module'))
 				console.warn(file + ' command failed to load.\n', err.stack);
@@ -38,7 +81,8 @@ class Prompt {
 		this.attempts = 0;
 		this.values = new Collection();
 
-		this.user.client.setTimeout(this.endPrompt.bind(this, 'time'), options.time <= 0 ? Infinity : options.time);
+		if (options.time > 0 && options.time < Infinity)
+			this.user.client.setTimeout(this.end.bind(this, 'time'), options.time);
 	}
 
 	addInput(message) {
@@ -49,7 +93,7 @@ class Prompt {
 
 		// If cancelled.
 		if (this.options.cancellable && message.content.toLowerCase() === 'cancel')
-			return this.endPrompt('cancelled');
+			return this.end('cancelled');
 
 		// Add value to result.
 		if (this.options.filter(message, this))
@@ -60,14 +104,14 @@ class Prompt {
 
 		// Resolve if messages required obtained.
 		if (this.values.size >= this.options.messages)
-			return this.endPrompt('success');
+			return this.end('success');
 
 		// Attempts surpassed.
 		if (this.options.attempts > 0 && this.attempts >= this.options.attempts)
-			return this.endPrompt('attempts');
+			return this.end('attempts');
 	}
 
-	endPrompt(reason) {
+	end(reason) {
 		if (this.ended)
 			return;
 
@@ -103,24 +147,24 @@ class Call {
 	}
 
 	// Intentionally avoid MessageCollector's so not to cause confusion to the developer if a possible EventEmitter memory leak occurs.
-	async prompt(msg,
-		{
-			filter = () => true,
-			correct = () => {},
-			cancellable = true,
-			autoRespond = true,
-			invisible = false,
-			time = 180000,
-			messages = 1,
-			attempts = 10
-		} = {}) {
+	async prompt(msg, options = {}) {
+		defaults(options, {
+			filter: () => true,
+			correct: () => {},
+			cancellable: true,
+			autoRespond: true,
+			invisible: false,
+			time: 180000,
+			messages: 1,
+			attempts: 10
+		});
 
 		if (msg)
 			await this.message.channel.send(...(Array.isArray(msg) ? msg : [msg]));
 
-		return new Promise((resolve, reject) => {
-			handler.prompts.set(this.message.author.id, new Prompt(this.message.author, this.message.channel,
-				{ filter, correct, cancellable, autoRespond, invisible, time, messages, attempts }, resolve, reject));
+		return new handler.Promise((resolve, reject) => {
+			handler.prompts.set(this.message.author.id, new handler.Prompt(this.message.author, this.message.channel,
+				options, resolve, reject));
 		});
 	}
 }
@@ -131,28 +175,36 @@ function handler(location, token,
 		onError = (_, command, exc) => console.warn('The ' + command.id + ' command encountered an error:\n' + exc.stack),
 		loadCategories = true,
 		allowBots = false,
+		customProps = {},
 		clientOptions
 	} = {}) {
+
+	defaults(customProps, {
+		id: 'info.name',
+		exec: 'run',
+		aliases: 'info.aliases',
+		channels: 'channels'
+	});
 
 	let determinePrefix = typeof customPrefix === 'function' ? customPrefix : () => customPrefix;
 	let client = token instanceof Client ? token : new Client(clientOptions);
 	let commands = new Collection();
 
-	load(commands, location);
+	load(commands, location, customProps);
 
 	if (loadCategories === true)
 		for (let folder of fs.readdirSync(location))
 			if (fs.statSync(location + '/' + folder).isDirectory())
-				load(commands, location + '/' + folder);
+				load(commands, location + '/' + folder, customProps);
 
 	client.on('message', async (message) => {
+		if (!(message instanceof Message) || (message.author.bot && !allowBots))
+			return;
+
 		let prompt = handler.prompts.get(message.author.id);
 
 		if (prompt && !prompt.invisible && prompt.channel.id === message.channel.id)
 			return prompt.addInput(message);
-
-		if (!(message instanceof Message) || (message.author.bot && !allowBots))
-			return;
 
 		let prefix = await determinePrefix(message);
 
@@ -173,18 +225,20 @@ function handler(location, token,
 			return;
 
 		let aliasUsed = args[0].toLowerCase();
-		let command = commands.find((cmd) => aliasUsed.toLowerCase() === cmd.id || cmd.aliases.includes(aliasUsed));
+		let command = commands.find((cmd) => aliasUsed.toLowerCase() === getObjVal(cmd, customProps.id) ||
+			getObjVal(cmd, customProps.aliases).includes(aliasUsed));
+		let channels = getObjVal(command, customProps.channels);
 
 		if (command == null ||
-			(command.channels === 'dm' && message.channel.type !== 'dm') ||
-			(command.channels === 'guild' && message.channel.type !== 'text'))
+			(channels === 'dm' && message.channel.type !== 'dm') ||
+			(channels === 'guild' && message.channel.type !== 'text'))
 			return;
 
 		args.shift();
 		cut.substring(aliasUsed.length).trim();
 
 		try {
-			command.exec(new Call(message, command, commands, cut, args, prefixUsed, aliasUsed));
+			getObjVal(command, customProps.exec)(new handler.Call(message, command, commands, cut, args, prefixUsed, aliasUsed));
 		} catch (exc) {
 			onError(message, command, exc);
 		}
@@ -196,6 +250,7 @@ function handler(location, token,
 	return client;
 }
 
+handler.Promise = Promise;
 handler.Call = Call;
 handler.Prompt = Prompt;
 handler.prompts = new Collection();

@@ -62,7 +62,16 @@ module.exports = {
 	}
 };
 ```
+
+# Customization
+I try to keep this dependency as customizable as possible, here are some benefits of the customizability.
+### Classes
+All references to classes come directly from the classes added onto the handler function. This means that you are able to easily extend these classes, either by access their prototype directly, or if you wish, redefining them, e.g. `handler.Call = <class-object-here>`. However redefining them is **not** recommended, and if you do so without being fully aware, it may cause some internal issues.
+### Command Layouts
+Already have existing command layouts, and you don't want to bother switching all `command.info.name` references to `command.id`? Simple, check out the `customProps` option that can be supplied to the [handle function's options](#handle-options).
+
 # API
+Documentation may not be complete. If you find something undocumented make a pull request on [the repository](https://github.com/gt-c/Simple-Discord.js-Command-Handler).
 ### handle(path, client, options?): [Client](https://discord.js.org/#/docs/main/stable/class/Client)
 Parameters:
 - `path` A string representing the path to the commands folder.
@@ -70,22 +79,35 @@ Parameters:
 - `options` Options to use with the handle function. [See here](#handle-options).
 
 Properties (static):
-- `Call` The Call class.
-- `Prompt` The Prompt class.
-- `prompts` - A [Collection](https://discord.js.org/#/docs/main/stable/class/Collection) of all current Prompt instances mapped by the user id.
+- `Promise` The Promise class (purely for redefining and using a promise library different than the native js one, such as [bluebird](https://www.npmjs.com/package/bluebird)).
+- `Call` The [Call class](#call-class).
+- `Prompt` The [Prompt class](#prompt-class).
+- `prompts` A [Collection](https://discord.js.org/#/docs/main/stable/class/Collection) of all current [Prompt](#prompt-class) instances mapped by the user id.
 
 <a id="handle-options"></a>
 
 ### HandleOptions
 Properties:
-- `customPrefix` A string representing the prefix. If a function is supplied, the function is called with the message, the function is also allowed to return a promise. Defaults to `!`.
+- `customPrefix` A string representing the prefix. If a function returning a string is supplied, the function is called with the message (the function is also allowed to return a promise resolving to a string). Defaults to `!`.
 - `onError` A function called with the message, the command and the error when a command encounters an error upon being run. Defaults to simply logging the command and error.
 - `loadCategories` A boolean option to load the folders inside the commands folder as well. Defaults to `true`.
 - `allowBots` A boolean option on whether or not to allow commands to be triggered by bots. Defaults to `false`.
+- `customProps` An object that redefines the property locations of a command, e.g. `{ id: 'name', exec: 'run' }` changes the location of the command id to `command.name` and the command execution to `command.run`. You can also use deep properties such as `{ id: 'info.name' }`.
 - `clientOptions` Options to supply directly to the Client instance being created. Is not used if the 'token' parameter is supplied.
 
+<a id="call-class"></a>
+
 ### Class: Call
-An instance of this is supplied to a command's `exec` function when a command is called.
+An instance of this is supplied to a command's `exec` function when a command is called. All parameters translate directly into properties.
+
+Parameters:
+- `message`
+- `command`
+- `commands`
+- `cut`
+- `args`
+- `prefixUsed`
+- `aliasUsed`
 
 Properties (when instantiated):
 - `message` The [Message](https://discord.js.org/#/docs/main/stable/class/Message) instance sent to trigger the command.
@@ -98,7 +120,7 @@ Properties (when instantiated):
 - `cut` A string representing the content of the message, excluding the prefix and alias used.
 
 Functions (when instantiated):
-- `prompt` A function to prompt a user with the text supplied, and wait for a response. [See here](#prompt-function).
+- `prompt(message, options)` A function to prompt a user with the text supplied, and wait for a response. [See here](#prompt-function).
 
 <a id="prompt-function"></a>
 
@@ -109,7 +131,7 @@ Parameters:
 
 Returns: A collection of messages recieved by the user that passed all requirements.
 
-Note: To force cancel a prompt, do `handler.prompts.delete('1234567890')` where the parameter is the prompted user's id.
+Note: To force cancel a prompt, do `handler.prompts.get('1234567890').end('cancelled')` where the parameter is the prompted user's id.
 
 <a id="prompt-options"></a>
 
@@ -125,3 +147,29 @@ Properties:
 - `attempts` The amount of times the user is able to fail the filter before having the prompt cancelled. Defaults to `10`. You can set this to `0` or `Infinity` for infinite attempts permitted.
 
 Note: Setting the `time` option to Infinity is strongly disadvised, as it can cause confusion for the user, and may also cause the promise to never be [garbage collected](https://blog.codeship.com/understanding-garbage-collection-in-node-js/) if the prompt is never fulfilled.
+
+<a id="prompt-class"></a>
+
+### Class: Prompt
+An instance of this is created whenever Call#prompt is called successfully and then added to handler#prompts and removed once the prompt is finished. All parameters translate directly into properties.
+
+Parameters:
+- `user`
+- `channel`
+- `options`
+- `resolve`
+- `reject`
+
+Properties (when instantiated):
+- `user` The user the prompt is based around.
+- `channel` The channel the prompt is in.
+- `options` The options of the prompt. [See here](#prompt-options).
+- `resolve` The function to resolve the promise.
+- `reject` The function to reject the promise.
+- `ended` Whether or not the prompt has been ended.
+- `attempts` The amount of attempts the user has made to complete the prompt.
+- `values` A [Collection](https://discord.js.org/#/docs/main/stable/class/Collection) resembling the [Message](https://discord.js.org/#/docs/main/stable/class/Message) objects collected by the prompt.
+
+Functions (when instantiated):
+- `addInput(message)` Adds a message object to the values if it passes the filter provided, otherwise calling the correct function provided.
+- `end(reason)` Ends the prompt for whatever reason, rejecting the promise if an unsuccessful completion.

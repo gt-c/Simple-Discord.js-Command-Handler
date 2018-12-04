@@ -1,6 +1,6 @@
 {
 	"name": "d.js-command-handler",
-	"version": "1.0.4",
+	"version": "1.0.5",
 	"description": "A simple command handler for discord.js.",
 	"main": "index.js",
 	"scripts": {
