@@ -49,7 +49,6 @@ module.exports = {
 		call.prompt('What\'s your favorite ice cream flavor?',
 			{ time: 60000 }).then((msg) => {
 				// Resolves with the response.
-				console.log(msg.content);
 				if (msg.content.toLowerCase() === 'vanilla')
 					call.message.channel.send('Cool! Mine too!');
 				else
