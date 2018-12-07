@@ -180,9 +180,9 @@ function handler(location, token,
 	} = {}) {
 
 	defaults(customProps, {
-		id: 'info.name',
-		exec: 'run',
-		aliases: 'info.aliases',
+		id: 'id',
+		exec: 'exec',
+		aliases: 'aliases',
 		channels: 'channels'
 	});
 
