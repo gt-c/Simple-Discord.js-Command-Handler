@@ -174,6 +174,7 @@ function handler(location, token,
 		customPrefix = '!',
 		onError = (_, command, exc) => console.warn('The ' + command.id + ' command encountered an error:\n' + exc.stack),
 		loadCategories = true,
+		defaultPrefix = true,
 		allowBots = false,
 		customProps = {},
 		clientOptions
@@ -207,19 +208,20 @@ function handler(location, token,
 			return prompt.addInput(message);
 
 		let prefixes = await determinePrefix(message);
+		prefixes = (Array.isArray(prefixes) ? prefixes : [prefixes]).filter((p) => typeof p === 'string').map(escapeRegExpChars);
 
-		if (typeof prefixes !== 'string' && !Array.isArray(prefixes))
+		if (prefixes.length === 0)
 			return;
 
-		prefixes = (Array.isArray(prefixes) ? prefixes : [prefixes]).filter((p) => typeof p === 'string').map(escapeRegExpChars)
-			.join('|');
-		let prefixUsed = message.content.match(new RegExp('^<@!?' + client.user.id + '>|' + prefixes));
+		if (defaultPrefix)
+			prefixes.push('<@' + client.user.id + '>', '<@!' + client.user.id + '>');
+
+		let prefixUsed = message.content.match(new RegExp('^' + prefixes.join('|')));
 
 		if (prefixUsed == null)
 			return;
-		else
-			prefixUsed = prefixUsed[0];
 
+		prefixUsed = prefixUsed[0];
 		let cut = message.content.substring(prefixUsed.length).trim();
 		let args = cut.split(/\s+/g);
 
@@ -229,15 +231,18 @@ function handler(location, token,
 		let aliasUsed = args[0].toLowerCase();
 		let command = commands.find((cmd) => aliasUsed.toLowerCase() === getObjVal(cmd, customProps.id) ||
 			getObjVal(cmd, customProps.aliases).includes(aliasUsed));
+
+		if (command == null)
+			return;
+
 		let channels = getObjVal(command, customProps.channels);
 
-		if (command == null ||
-			(channels === 'dm' && message.channel.type !== 'dm') ||
+		if ((channels === 'dm' && message.channel.type !== 'dm') ||
 			(channels === 'guild' && message.channel.type !== 'text'))
 			return;
 
+		cut = cut.substring(aliasUsed.length).trim();
 		args.shift();
-		cut.substring(aliasUsed.length).trim();
 
 		try {
 			getObjVal(command, customProps.exec)(new handler.Call(message, command, commands, cut, args, prefixUsed, aliasUsed));

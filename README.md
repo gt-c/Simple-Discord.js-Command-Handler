@@ -68,6 +68,13 @@ I try to keep this dependency as customizable as possible, here are some benefit
 All references to classes come directly from the classes added onto the handler function. This means that you are able to easily extend these classes, either by access their prototype directly, or if you wish, redefining them, e.g. `handler.Call = <class-object-here>`. However redefining them is **not** recommended, and if you do so without being fully aware, it may cause some internal issues.
 ### Command Layouts
 Already have existing command layouts, and you don't want to bother switching all `command.info.name` references to `command.id`? Simple, check out the `customProps` option that can be supplied to the [handle function's options](#handle-options).
+### Other
+Other forms of custom traits are
+- custom & multiple prefixes
+- custom command error handling
+- options for loading categories, allowing bot input, etc.
+
+If you have any suggestions for this dependency feel free to [leave an issue](https://github.com/gt-c/Simple-Discord.js-Command-Handler/issues) with your idea!
 
 # API
 Documentation may not be complete. If you find something undocumented make a pull request on [the repository](https://github.com/gt-c/Simple-Discord.js-Command-Handler).
@@ -87,9 +94,10 @@ Properties (static):
 
 ### HandleOptions
 Properties:
-- `customPrefix` A string representing the prefix. If a function returning a string is supplied, the function is called with the message (the function is also allowed to return a promise resolving to a string). Defaults to `!`.
+- `customPrefix` A string, array, or function value representing the prefix(es) of the bot. A function should return a string or array of strings. If a database call or some other asynchronous action is required, the function should return a Promise. Defaults to `!`.
 - `onError` A function called with the message, the command and the error when a command encounters an error upon being run. Defaults to simply logging the command and error.
 - `loadCategories` A boolean option to load the folders inside the commands folder as well. Defaults to `true`.
+- `defaultPrefix` A boolean option determining if the default mention prefix is used, e.g `@bot ping`. Defaults to `true`.
 - `allowBots` A boolean option on whether or not to allow commands to be triggered by bots. Defaults to `false`.
 - `customProps` An object that redefines the property locations of a command, e.g. `{ id: 'name', exec: 'run' }` changes the location of the command id to `command.name` and the command execution to `command.run`. You can also use deep properties such as `{ id: 'info.name' }`.
 - `clientOptions` Options to supply directly to the Client instance being created. Is not used if the 'token' parameter is supplied.
