@@ -172,3 +172,6 @@ Properties (when instantiated):
 Functions (when instantiated):
 - `addInput(message)` Adds a message object to the values if it passes the filter provided, otherwise calling the correct function provided.
 - `end(reason)` Ends the prompt for whatever reason, rejecting the promise if an unsuccessful completion.
+
+# License
+This work is licensed under a [Creative Commons Attribution-NonCommercial 4.0 International License](http://creativecommons.org/licenses/by-nc/4.0/).

@@ -1,12 +1,12 @@
 {
 	"name": "d.js-command-handler",
-	"version": "1.0.5",
+	"version": "1.0.6",
 	"description": "A simple command handler for discord.js.",
 	"main": "index.js",
 	"scripts": {
-	  "test": "eslint .",
-	  "start": "node index.js",
-	  "fix": "eslint . --fix"
+		"test": "eslint .",
+		"start": "node index.js",
+		"fix": "eslint . --fix"
 	},
 	"keywords": [
 		"discord.js",
@@ -16,14 +16,14 @@
 	"repository": {
 		"type": "git",
 		"url": "git+https://github.com/gt-c/Simple-Discord.js-Command-Handler"
-  	},
+	},
 	"author": "gt_c#7841",
-	"license": "SEE LICENSE IN LICENSE.md",
+	"license": "CC",
 	"dependencies": {
-	  "discord.js": "^11.4.2"
+		"discord.js": "^11.4.2"
 	},
 	"devDependencies": {
 		"babel-eslint": "^8.2.6",
 		"eslint": "^4.19.1"
-	  }
-  }
+	}
+}

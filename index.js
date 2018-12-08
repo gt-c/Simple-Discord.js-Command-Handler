@@ -206,12 +206,14 @@ function handler(location, token,
 		if (prompt && !prompt.invisible && prompt.channel.id === message.channel.id)
 			return prompt.addInput(message);
 
-		let prefix = await determinePrefix(message);
+		let prefixes = await determinePrefix(message);
 
-		if (typeof prefix !== 'string')
+		if (typeof prefixes !== 'string' && !Array.isArray(prefixes))
 			return;
 
-		let prefixUsed = message.content.match(new RegExp('^<@!?' + client.user.id + '>|' + escapeRegExpChars(prefix)));
+		prefixes = (Array.isArray(prefixes) ? prefixes : [prefixes]).filter((p) => typeof p === 'string').map(escapeRegExpChars)
+			.join('|');
+		let prefixUsed = message.content.match(new RegExp('^<@!?' + client.user.id + '>|' + prefixes));
 
 		if (prefixUsed == null)
 			return;
