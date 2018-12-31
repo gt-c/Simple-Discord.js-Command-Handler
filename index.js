@@ -238,15 +238,13 @@ function handler(location, token,
 
 		let channels = getObjVal(command, customProps.channels);
 
-		if ((channels === 'dm' && message.channel.type !== 'dm') ||
+		if ((message.guild && restrictedGuilds.length > 0 && !restrictedGuilds.includes(message.guild.id)) ||
+			(channels === 'dm' && message.channel.type !== 'dm') ||
 			(channels === 'guild' && message.channel.type !== 'text'))
 			return;
 
 		cut = cut.substring(aliasUsed.length).trim();
 		args.shift();
-		
-		if (message.channel.type === 'text' && restrictedGuilds.length > 0 && !restrictedGuilds.includes(message.guild.id))
-			return;
 		
 		try {
 			getObjVal(command, customProps.exec)(new handler.Call(message, command, commands, cut, args, prefixUsed, aliasUsed));
