@@ -176,6 +176,7 @@ function handler(location, token,
 		loadCategories = true,
 		defaultPrefix = true,
 		allowBots = false,
+		restrictedGuilds = [],
 		customProps = {},
 		clientOptions
 	} = {}) {
@@ -243,7 +244,10 @@ function handler(location, token,
 
 		cut = cut.substring(aliasUsed.length).trim();
 		args.shift();
-
+		
+		if (message.channel.type === 'text' && restrictedGuilds.length > 0 && !restrictedGuilds.includes(message.guild.id))
+			return;
+		
 		try {
 			getObjVal(command, customProps.exec)(new handler.Call(message, command, commands, cut, args, prefixUsed, aliasUsed));
 		} catch (exc) {
