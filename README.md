@@ -99,7 +99,7 @@ Properties:
 - `loadCategories` A boolean option to load the folders inside the commands folder as well. Defaults to `true`.
 - `defaultPrefix` A boolean option determining if the default mention prefix is used, e.g `@bot ping`. Defaults to `true`.
 - `allowBots` A boolean option on whether or not to allow commands to be triggered by bots. Defaults to `false`.
-- `restrictedGuilds` An array which restricts commands to a certain guild. Defaults to `[]`.
+- `restrictedGuilds` An array which restricts commands to certain guilds. Defaults to `[]`.
 - `customProps` An object that redefines the property locations of a command, e.g. `{ id: 'name', exec: 'run' }` changes the location of the command id to `command.name` and the command execution to `command.run`. You can also use deep properties such as `{ id: 'info.name' }`.
 - `clientOptions` Options to supply directly to the Client instance being created. Is not used if the 'token' parameter is supplied.
 
