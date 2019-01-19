@@ -96,7 +96,10 @@ Properties (static):
 Properties:
 - `customPrefix` A string, array, or function value representing the prefix(es) of the bot. A function should return a string or array of strings. If a database call or some other asynchronous action is required, the function should return a Promise. Defaults to `!`.
 - `onError` A function called with the message, the command and the error when a command encounters an error upon being run. Defaults to simply logging the command and error.
+- `editCategory` A function that is called with a command's category folder, used to edit the string passed into the category property of the command. Requires `HandleOptions#setCategoryProperty` to be `true`. Defaults to capitilizing the first character of the category.
+- `defaultCategory` The default category that is set on a command if it has no category folder. Defaults to `'Other'`.
 - `loadCategories` A boolean option to load the folders inside the commands folder as well. Defaults to `true`.
+- `setCategoryProperty` A boolean option representing whether or not to set the category property of a command based off of it's parent folder. Defaults to `true`.
 - `defaultPrefix` A boolean option determining if the default mention prefix is used, e.g `@bot ping`. Defaults to `true`.
 - `allowBots` A boolean option on whether or not to allow commands to be triggered by bots. Defaults to `false`.
 - `restrictedGuilds` An array which restricts commands to certain guilds. Defaults to `[]`.

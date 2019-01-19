@@ -38,7 +38,7 @@ function defObj(obj, str, val) {
 	return obj[arr[arr.length - 1]];
 }
 
-function load(commands, path, customProps) {
+function load(commands, path, customProps, category, editCategory) {
 	for (let file of fs.readdirSync(path)) {
 		try {
 			let command = require(path + '/' + file);
@@ -49,6 +49,9 @@ function load(commands, path, customProps) {
 			if (typeof id !== 'string' ||
 				typeof exec !== 'function')
 				throw new TypeError('Either command.' + customProps.id + ' or command.' + customProps.exec + ' are not their proper values.');
+
+			if (category && !command.category)
+				command.category = editCategory(category);
 
 			defObj(command, customProps.aliases,
 				(aliases) => Array.isArray(aliases) ?
@@ -173,7 +176,10 @@ function handler(location, token,
 	{
 		customPrefix = '!',
 		onError = (_, command, exc) => console.warn('The ' + command.id + ' command encountered an error:\n' + exc.stack),
+		editCategory = (category) => category.replace(/^./, (m) => m.toUpperCase()),
+		defaultCategory = 'Other',
 		loadCategories = true,
+		setCategoryProperty = true,
 		defaultPrefix = true,
 		allowBots = false,
 		restrictedGuilds = [],
@@ -192,12 +198,12 @@ function handler(location, token,
 	let client = token instanceof Client ? token : new Client(clientOptions);
 	let commands = new Collection();
 
-	load(commands, location, customProps);
+	load(commands, location, customProps, setCategoryProperty ? defaultCategory : false, editCategory);
 
 	if (loadCategories === true)
 		for (let folder of fs.readdirSync(location))
 			if (fs.statSync(location + '/' + folder).isDirectory())
-				load(commands, location + '/' + folder, customProps);
+				load(commands, location + '/' + folder, customProps, setCategoryProperty ? folder : false);
 
 	client.on('message', async (message) => {
 		if (!(message instanceof Message) || (message.author.bot && !allowBots))
@@ -245,7 +251,7 @@ function handler(location, token,
 
 		cut = cut.substring(aliasUsed.length).trim();
 		args.shift();
-		
+
 		try {
 			getObjVal(command, customProps.exec)(new handler.Call(message, command, commands, cut, args, prefixUsed, aliasUsed));
 		} catch (exc) {
