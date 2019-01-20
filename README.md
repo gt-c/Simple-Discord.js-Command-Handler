@@ -89,6 +89,7 @@ Properties (static):
 - `Call` The [Call class](#call-class).
 - `Prompt` The [Prompt class](#prompt-class).
 - `prompts` A [Collection](https://discord.js.org/#/docs/main/stable/class/Collection) of all current [Prompt](#prompt-class) instances mapped by the user id.
+- `promptOptionsDefaults` The default prompt options. Adjusted purely for code convenience
 
 <a id="handle-options"></a>
 

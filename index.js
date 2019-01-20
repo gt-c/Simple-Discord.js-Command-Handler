@@ -151,16 +151,7 @@ class Call {
 
 	// Intentionally avoid MessageCollector's so not to cause confusion to the developer if a possible EventEmitter memory leak occurs.
 	async prompt(msg, options = {}) {
-		defaults(options, {
-			filter: () => true,
-			correct: () => {},
-			cancellable: true,
-			autoRespond: true,
-			invisible: false,
-			time: 180000,
-			messages: 1,
-			attempts: 10
-		});
+		defaults(options, handler.promptOptionsDefaults);
 
 		let oldFilter = options.filter;
 
@@ -278,5 +269,16 @@ handler.Promise = Promise;
 handler.Call = Call;
 handler.Prompt = Prompt;
 handler.prompts = new Collection();
+
+handler.promptOptionsDefaults = {
+	filter: () => true,
+	correct: () => {},
+	cancellable: true,
+	autoRespond: true,
+	invisible: false,
+	time: 180000,
+	messages: 1,
+	attempts: 10
+}
 
 module.exports = handler;
