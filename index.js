@@ -162,6 +162,15 @@ class Call {
 			attempts: 10
 		});
 
+		let oldFilter = options.filter;
+
+		if (oldFilter instanceof RegExp)
+			options.filter = (m) => oldFilter.test(m.content);
+		else if (Array.isArray(oldFilter))
+			options.filter = (m) => oldFilter.includes(m.content.toLowerCase());
+		else
+			options.filter = () => !!oldFilter;
+
 		if (msg)
 			await this.message.channel.send(...(Array.isArray(msg) ? msg : [msg]));
 
