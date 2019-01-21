@@ -1,5 +1,15 @@
 const fs = require('fs');
-const { Client, Message, Collection } = require('discord.js');
+const Discord = require('discord.js');
+const { Client, Message, Collection } = Discord;
+
+/**
+ * @typedef {object} Command
+ * @property {string} id
+ * @property {function(call: Call): void} exec
+ * @property {string[]} aliases
+ * @property {'dm'|'guild'|'any'} channels
+ * @property {?string} category
+ */
 
 function defaults(obj, objDef) {
 	for (let [name, prop] of Object.entries(objDef))
@@ -72,6 +82,27 @@ function escapeRegExpChars(text) {
 	return text.replace(/[|\\{}()[\]^$+*?.]/g, '\\$&');
 }
 
+/**
+ * @typedef {object} PromptOptions
+ * @property {number} time
+ * @property {?boolean} cancellable
+ * @property {function(message: Discord.Message, prompt: Prompt): boolean} filter
+ * @property {function(message: Discord.Message, prompt: Prompt): void} correct
+ * @property {number} messages
+ * @property {number} attempts
+ * @property {?boolean} autoRespond
+ */
+
+/**
+ * @property {Discord.User} user
+ * @property {Discord.TextChannel} channel
+ * @property {PromptOptions} options
+ * @property {function(value: Discord.Collection|Discord.Message): any} resolve
+ * @property {function(err: Error): any} reject
+ * @property {boolean} ended
+ * @property {number} attempts
+ * @property {Discord.Collection} values
+ */
 class Prompt {
 	constructor(user, channel, options, resolve, reject) {
 		this.user = user;
@@ -88,6 +119,10 @@ class Prompt {
 			this.user.client.setTimeout(this.end.bind(this, 'time'), options.time);
 	}
 
+	/**
+	 * @param {Discord.Message} message
+	 * @returns {any}
+	 */
 	addInput(message) {
 		if (this.ended)
 			return;
@@ -114,6 +149,10 @@ class Prompt {
 			return this.end('attempts');
 	}
 
+	/**
+	 * @param {'time'|'cancelled'|'attempts'|'success'} reason
+	 * @returns {any}
+	 */
 	end(reason) {
 		if (this.ended)
 			return;
@@ -137,6 +176,18 @@ class Prompt {
 	}
 }
 
+
+
+/**
+ * @property {Discord.Message} message
+ * @property {Discord.Client} client
+ * @property {Command} command
+ * @property {Discord.Collection} commands
+ * @property {string[]} args
+ * @property {string} prefixUsed
+ * @property {string} aliasUsed
+ * @property {string} cut
+ */
 class Call {
 	constructor(message, command, commands, cut, args, prefixUsed, aliasUsed) {
 		this.message = message;
@@ -149,7 +200,11 @@ class Call {
 		this.cut = cut;
 	}
 
-	// Intentionally avoid MessageCollector's so not to cause confusion to the developer if a possible EventEmitter memory leak occurs.
+	/**
+	 * Intentionally avoid `MessageCollector`'s so not to cause confusion to the developer if a possible `EventEmitter` memory leak occurs.
+	 * @param {?Discord.StringResolvable} msg
+	 * @param {PromptOptions} options
+	 */
 	async prompt(msg, options = {}) {
 		defaults(options, handler.promptOptionsDefaults);
 
@@ -172,6 +227,27 @@ class Call {
 	}
 }
 
+/**
+ * @typedef {object} HandlerOptions
+ * @property {?string} customPrefix
+ * @property {?function(Discord.Message, Command, any): void} onError
+ * @property {?function(category: string|boolean): string} editCategory
+ * @property {?string} defaultCategory
+ * @property {?boolean} loadCategories
+ * @property {?boolean} setCategoryProperty
+ * @property {?boolean} defaultPrefix
+ * @property {?boolean} allowBots
+ * @property {?Discord.Snowflake[]} restrictedGuilds
+ * @property {?object} customProps
+ * @property {?Discord.ClientOptions} clientOptions
+ */
+
+/**
+ * @param {string} location
+ * @param {Discord.Client|string} token
+ * @param {HandlerOptions} options
+ * @returns {Discord.Client}
+ */
 function handler(location, token,
 	{
 		customPrefix = '!',
@@ -268,8 +344,10 @@ function handler(location, token,
 handler.Promise = Promise;
 handler.Call = Call;
 handler.Prompt = Prompt;
+/** @type {Discord.Collection} */
 handler.prompts = new Collection();
 
+/** @type {PromptOptions} */
 handler.promptOptionsDefaults = {
 	filter: () => true,
 	correct: () => {},
@@ -279,6 +357,6 @@ handler.promptOptionsDefaults = {
 	time: 180000,
 	messages: 1,
 	attempts: 10
-}
+};
 
 module.exports = handler;
