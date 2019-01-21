@@ -250,7 +250,7 @@ class Call {
  * @property {?string|string[]|function(message: Discord.Message): Promise<string|string[]>} customPrefix A `string`, `array`, or `function` value
  * representing the prefix(es) of the bot. A function should return a string or array of strings. If a database call or some other asynchronous action
  * is required, the function should return a Promise.
- * @property {?function(Discord.Message, Command, any): void} onError A `function` called with the message, the command and the error when a command
+ * @property {?function(message: Discord.Message, cmd: Command, err: any): void} onError A `function` called with the message, the command and the error when a command
  * encounters an error upon being run.
  * @property {?function(category: string|boolean): string} editCategory A `function` that is called with a command's category folder, used to edit the
  * string passed into the category property of the command. Requires `setCategoryProperty` to be true.
