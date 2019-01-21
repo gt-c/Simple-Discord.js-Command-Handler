@@ -84,24 +84,35 @@ function escapeRegExpChars(text) {
 
 /**
  * @typedef {object} PromptOptions
- * @property {number} time
- * @property {?boolean} cancellable
- * @property {function(message: Discord.Message, prompt: Prompt): boolean} filter
- * @property {function(message: Discord.Message, prompt: Prompt): void} correct
- * @property {number} messages
- * @property {number} attempts
- * @property {?boolean} autoRespond
+ * Note: Setting the `time` option to `Infinity` is strongly disadvised, as it can cause confusion for the user, and may also cause the promise to
+ * never be garbage collected if the prompt is never fulfilled.
+ * @property {number} time A number represing the amount of milliseconds to wait before ending the prompt from time. Set this to `0` or `Infinity` for
+ * no time limit.
+ * @property {?boolean} cancellable A boolean representing whether or not the user should be able to reply with cancel to cancel the ongoing prompt.
+ * @property {function(message: Discord.Message, prompt: Prompt): boolean} filter A function called with the message and `Prompt` instance to
+ * determine whether a message should be deleted or not. Should not include filtering the user (done internally).
+ * @property {function(message: Discord.Message, prompt: Prompt): void} correct A function called with the message and `Prompt` instance that should
+ * handle when a message does not pass the filter.
+ * @property {number} messages The amount of messages to accept before resolving the promise.
+ * @property {number} attempts The amount of times the user is able to fail the filter before having the prompt cancelled. You can set this to `0` or
+ * `Infinity` for infinite attempts permitted.
+ * @property {?boolean} autoRespond A boolean representing whether or not the bot should automatically respond when the prompt is cancelled/out of
+ * time with `Cancelled prompt.`, or when the max attempts are exceeded, `Too many attempts..` If disabled, you should probably handle this on the
+ * promise's rejection.
+ * @property {?boolean} invisible A boolean representing whether or not the prompt is permitted to coexist with another prompt in the same channel.
  */
 
 /**
- * @property {Discord.User} user
- * @property {Discord.TextChannel} channel
- * @property {PromptOptions} options
- * @property {function(value: Discord.Collection|Discord.Message): any} resolve
- * @property {function(err: Error): any} reject
- * @property {boolean} ended
- * @property {number} attempts
- * @property {Discord.Collection} values
+ * An instance of this is created whenever `Call#prompt` is called successfully and then added to `handler#prompts` and removed once the prompt is
+ * finished. All parameters translate directly into properties.
+ * @property {Discord.User} user The user the prompt is based around.
+ * @property {Discord.TextChannel} channel The channel the prompt is in.
+ * @property {PromptOptions} options The options of the prompt.
+ * @property {function(value: Discord.Collection|Discord.Message): any} resolve The function to resolve the promise.
+ * @property {function(err: Error): any} reject The function to reject the promise.
+ * @property {boolean} ended Whether or not the prompt has been ended.
+ * @property {number} attempts The amount of attempts the user has made to complete the prompt.
+ * @property {Discord.Collection} values A `Collection` resembling the `Message` objects collected by the prompt.
  */
 class Prompt {
 	constructor(user, channel, options, resolve, reject) {
@@ -120,6 +131,7 @@ class Prompt {
 	}
 
 	/**
+	 * Adds a message object to the values if it passes the filter provided, otherwise calling the correct function provided.
 	 * @param {Discord.Message} message
 	 * @returns {any}
 	 */
@@ -150,6 +162,7 @@ class Prompt {
 	}
 
 	/**
+	 * Ends the prompt for whatever reason, rejecting the promise if an unsuccessful completion.
 	 * @param {'time'|'cancelled'|'attempts'|'success'} reason
 	 * @returns {any}
 	 */
@@ -176,17 +189,18 @@ class Prompt {
 	}
 }
 
-
-
 /**
- * @property {Discord.Message} message
- * @property {Discord.Client} client
- * @property {Command} command
- * @property {Discord.Collection} commands
- * @property {string[]} args
- * @property {string} prefixUsed
- * @property {string} aliasUsed
- * @property {string} cut
+ * An instance of this is supplied to a command's `exec` function when a command is called. All parameters translate directly into properties.
+ * @property {Discord.Message} message The `Message` instance sent to trigger the command.
+ * @property {Discord.Client} client The `Client` instance of the bot.
+ * @property {Command} command The command object, e.g. `{ id: 'ping', exec: () => {} }`.
+ * @property {Discord.Collection} commands A `Collection` instance representing all the command objects mapped by the command id's.
+ * @property {string[]} args A array of strings representing the arguments supplied to the message, e.g '!ban @gt_c for bullying me' would make this
+ * array `['@gt_c', 'for', 'bullying', 'me']`.
+ * @property {string} prefixUsed A string representing the prefix used to call the command. Possibly your client's mention if that is how the user
+ * triggered the command.
+ * @property {string} aliasUsed The alias (or command id) used in calling the command, e.g. '!ping' would make this property 'ping'.
+ * @property {string} cut A string representing the content of the message, excluding the prefix and alias used.
  */
 class Call {
 	constructor(message, command, commands, cut, args, prefixUsed, aliasUsed) {
@@ -202,8 +216,12 @@ class Call {
 
 	/**
 	 * Intentionally avoid `MessageCollector`'s so not to cause confusion to the developer if a possible `EventEmitter` memory leak occurs.
-	 * @param {?Discord.StringResolvable} msg
-	 * @param {PromptOptions} options
+	 * Note: To force cancel a prompt, do `handler.prompts.get('1234567890').end('cancelled')` where the parameter is the prompted user's id.
+	 * @param {?Discord.StringResolvable} msg The arguments you would supply to a `TextChannel#send` function. Can be an array of arguments or a
+	 * single argument.
+	 * @param {PromptOptions} options Options to customize the prompt with.
+	 * @returns {Promise<Discord.Message|Discord.Collection<Discord.Snowflake, Discord.Message>>} A collection of messages recieved by the user that
+	 * passed all requirements.
 	 */
 	async prompt(msg, options = {}) {
 		defaults(options, handler.promptOptionsDefaults);
@@ -228,24 +246,32 @@ class Call {
 }
 
 /**
- * @typedef {object} HandlerOptions
- * @property {?string} customPrefix
- * @property {?function(Discord.Message, Command, any): void} onError
- * @property {?function(category: string|boolean): string} editCategory
- * @property {?string} defaultCategory
- * @property {?boolean} loadCategories
- * @property {?boolean} setCategoryProperty
- * @property {?boolean} defaultPrefix
- * @property {?boolean} allowBots
- * @property {?Discord.Snowflake[]} restrictedGuilds
- * @property {?object} customProps
- * @property {?Discord.ClientOptions} clientOptions
+ * @typedef {object} HandleOptions
+ * @property {?string|string[]|function(message: Discord.Message): Promise<string|string[]>} customPrefix A `string`, `array`, or `function` value
+ * representing the prefix(es) of the bot. A function should return a string or array of strings. If a database call or some other asynchronous action
+ * is required, the function should return a Promise.
+ * @property {?function(Discord.Message, Command, any): void} onError A `function` called with the message, the command and the error when a command
+ * encounters an error upon being run.
+ * @property {?function(category: string|boolean): string} editCategory A `function` that is called with a command's category folder, used to edit the
+ * string passed into the category property of the command. Requires `setCategoryProperty` to be true.
+ * @property {?string} defaultCategory The default category that is set on a command if it has no category folder.
+ * @property {?boolean} loadCategories A `boolean` option to load the folders inside the commands folder as well.
+ * @property {?boolean} setCategoryProperty A `boolean` option representing whether or not to set the category property of a command based off of it's
+ * parent folder.
+ * @property {?boolean} defaultPrefix A `boolean` option determining if the default mention prefix is used, e.g @bot ping.
+ * @property {?boolean} allowBots A `boolean` option on whether or not to allow commands to be triggered by bots.
+ * @property {?Discord.Snowflake[]} restrictedGuilds An array which restricts commands to certain guilds.
+ * @property {?object} customProps An `object` that redefines the property locations of a command, e.g. `{ id: 'name', exec: 'run' }` changes the
+ * location of the command id to `command.name` and the command execution to `command.run`. You can also use deep properties such as
+ * `{ id: 'info.name' }`.
+ * @property {?Discord.ClientOptions} clientOptions Options to supply directly to the `Client` instance being created. Is not used if the `token`
+ * parameter is supplied.
  */
 
 /**
- * @param {string} location
- * @param {Discord.Client|string} token
- * @param {HandlerOptions} options
+ * @param {string} location A `string` representing the path to the commands folder.
+ * @param {Discord.Client|string} token A token to create a `Client` instance and login with, or a pre-existing `Client` instance to use.
+ * @param {HandleOptions} options Options to use with the handle function.
  * @returns {Discord.Client}
  */
 function handler(location, token,
@@ -341,13 +367,20 @@ function handler(location, token,
 	return client;
 }
 
+/** The Promise class (purely for redefining and using a promise library different than the native js one, such as bluebird). */
 handler.Promise = Promise;
 handler.Call = Call;
 handler.Prompt = Prompt;
-/** @type {Discord.Collection} */
+/**
+ * A `Collection` of all current `Prompt` instances mapped by the user id.
+ * @type {Discord.Collection}
+ */
 handler.prompts = new Collection();
 
-/** @type {PromptOptions} */
+/**
+ * The default prompt options. Adjusted purely for code convenience
+ * @type {PromptOptions}
+ */
 handler.promptOptionsDefaults = {
 	filter: () => true,
 	correct: () => {},
