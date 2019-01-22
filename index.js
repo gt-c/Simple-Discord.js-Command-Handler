@@ -86,20 +86,19 @@ function escapeRegExpChars(text) {
  * @typedef {object} PromptOptions
  * Note: Setting the `time` option to `Infinity` is strongly disadvised, as it can cause confusion for the user, and may also cause the promise to
  * never be garbage collected if the prompt is never fulfilled.
- * @property {number} time A number represing the amount of milliseconds to wait before ending the prompt from time. Set this to `0` or `Infinity` for
- * no time limit.
- * @property {?boolean} cancellable A boolean representing whether or not the user should be able to reply with cancel to cancel the ongoing prompt.
- * @property {function(message: Discord.Message, prompt: Prompt): boolean} filter A function called with the message and `Prompt` instance to
- * determine whether a message should be deleted or not. Should not include filtering the user (done internally).
- * @property {function(message: Discord.Message, prompt: Prompt): void} correct A function called with the message and `Prompt` instance that should
- * handle when a message does not pass the filter.
+ * @property {number} time The amount of milliseconds to wait before ending the prompt from time. Set this to `0` or `Infinity` for no time limit.
+ * @property {?boolean} cancellable Whether or not the user should be able to reply with cancel to cancel the ongoing prompt.
+ * @property {function(message: Discord.Message, prompt: Prompt): boolean} filter Called with the message and `Prompt` instance to determine whether a
+ * message should be deleted or not. Should not include filtering the user (done internally).
+ * @property {function(message: Discord.Message, prompt: Prompt): void} correct Called with the message and `Prompt` instance that should handle when
+ * a message does not pass the filter.
  * @property {number} messages The amount of messages to accept before resolving the promise.
  * @property {number} attempts The amount of times the user is able to fail the filter before having the prompt cancelled. You can set this to `0` or
  * `Infinity` for infinite attempts permitted.
- * @property {?boolean} autoRespond A boolean representing whether or not the bot should automatically respond when the prompt is cancelled/out of
- * time with `Cancelled prompt.`, or when the max attempts are exceeded, `Too many attempts..` If disabled, you should probably handle this on the
- * promise's rejection.
- * @property {?boolean} invisible A boolean representing whether or not the prompt is permitted to coexist with another prompt in the same channel.
+ * @property {?boolean} autoRespond Whether or not the bot should automatically respond when the prompt is cancelled/out of time with
+ * `Cancelled prompt.`, or when the max attempts are exceeded, `Too many attempts..` If disabled, you should probably handle this on the promise's
+ * rejection.
+ * @property {?boolean} invisible Whether or not the prompt is permitted to coexist with another prompt in the same channel.
  */
 
 /**
@@ -112,7 +111,7 @@ function escapeRegExpChars(text) {
  * @property {function(err: Error): any} reject The function to reject the promise.
  * @property {boolean} ended Whether or not the prompt has been ended.
  * @property {number} attempts The amount of attempts the user has made to complete the prompt.
- * @property {Discord.Collection} values A `Collection` resembling the `Message` objects collected by the prompt.
+ * @property {Discord.Collection} values The `Message` objects collected by the prompt.
  */
 class Prompt {
 	constructor(user, channel, options, resolve, reject) {
@@ -191,16 +190,15 @@ class Prompt {
 
 /**
  * An instance of this is supplied to a command's `exec` function when a command is called. All parameters translate directly into properties.
- * @property {Discord.Message} message The `Message` instance sent to trigger the command.
- * @property {Discord.Client} client The `Client` instance of the bot.
+ * @property {Discord.Message} message The Message instance sent to trigger the command.
+ * @property {Discord.Client} client The Client instance of the bot.
  * @property {Command} command The command object, e.g. `{ id: 'ping', exec: () => {} }`.
- * @property {Discord.Collection} commands A `Collection` instance representing all the command objects mapped by the command id's.
- * @property {string[]} args A array of strings representing the arguments supplied to the message, e.g '!ban @gt_c for bullying me' would make this
- * array `['@gt_c', 'for', 'bullying', 'me']`.
- * @property {string} prefixUsed A string representing the prefix used to call the command. Possibly your client's mention if that is how the user
- * triggered the command.
+ * @property {Discord.Collection} commands All the command objects mapped by the command id's.
+ * @property {string[]} args The arguments supplied to the message, e.g '!ban @gt_c for bullying me' would make this array
+ * `['@gt_c', 'for', 'bullying', 'me']`.
+ * @property {string} prefixUsed The prefix used to call the command. Possibly your client's mention if that is how the user triggered the command.
  * @property {string} aliasUsed The alias (or command id) used in calling the command, e.g. '!ping' would make this property 'ping'.
- * @property {string} cut A string representing the content of the message, excluding the prefix and alias used.
+ * @property {string} cut The content of the message, excluding the prefix and alias used.
  */
 class Call {
 	constructor(message, command, commands, cut, args, prefixUsed, aliasUsed) {
@@ -247,29 +245,27 @@ class Call {
 
 /**
  * @typedef {object} HandleOptions
- * @property {?string|string[]|function(message: Discord.Message): Promise<string|string[]>} customPrefix A `string`, `array`, or `function` value
- * representing the prefix(es) of the bot. A function should return a string or array of strings. If a database call or some other asynchronous action
- * is required, the function should return a Promise.
- * @property {?function(message: Discord.Message, cmd: Command, err: any): void} onError A `function` called with the message, the command and the error when a command
- * encounters an error upon being run.
- * @property {?function(category: string|boolean): string} editCategory A `function` that is called with a command's category folder, used to edit the
- * string passed into the category property of the command. Requires `setCategoryProperty` to be true.
+ * @property {?string|string[]|function(message: Discord.Message): Promise<string|string[]>} customPrefix The prefix(es) of the bot. A function should
+ * return a string or array of strings. If a database call or some other asynchronous action is required, the function should return a Promise.
+ * @property {?function(message: Discord.Message, cmd: Command, err: any): void} onError A function called with the message, the command and the error
+ * when a command encounters an error upon being run.
+ * @property {?function(category: string|boolean): string} editCategory Used to edit the string passed into the category property of the command.
+ * Requires `setCategoryProperty` to be true.
  * @property {?string} defaultCategory The default category that is set on a command if it has no category folder.
- * @property {?boolean} loadCategories A `boolean` option to load the folders inside the commands folder as well.
- * @property {?boolean} setCategoryProperty A `boolean` option representing whether or not to set the category property of a command based off of it's
+ * @property {?boolean} loadCategories A boolean option to load the folders inside the commands folder as well.
+ * @property {?boolean} setCategoryProperty A boolean option representing whether or not to set the category property of a command based off of it's
  * parent folder.
- * @property {?boolean} defaultPrefix A `boolean` option determining if the default mention prefix is used, e.g @bot ping.
- * @property {?boolean} allowBots A `boolean` option on whether or not to allow commands to be triggered by bots.
- * @property {?Discord.Snowflake[]} restrictedGuilds An array which restricts commands to certain guilds.
- * @property {?object} customProps An `object` that redefines the property locations of a command, e.g. `{ id: 'name', exec: 'run' }` changes the
- * location of the command id to `command.name` and the command execution to `command.run`. You can also use deep properties such as
- * `{ id: 'info.name' }`.
+ * @property {?boolean} defaultPrefix A boolean option determining if the default mention prefix is used, e.g `@bot ping`.
+ * @property {?boolean} allowBots A boolean option on whether or not to allow commands to be triggered by bots.
+ * @property {?Discord.Snowflake[]} restrictedGuilds Restricts commands to certain guilds.
+ * @property {?object} customProps Redefines the property locations of a command, e.g. `{ id: 'name', exec: 'run' }` changes the location of the
+ * command id to `command.name` and the command execution to `command.run`. You can also use deep properties such as `{ id: 'info.name' }`.
  * @property {?Discord.ClientOptions} clientOptions Options to supply directly to the `Client` instance being created. Is not used if the `token`
  * parameter is supplied.
  */
 
 /**
- * @param {string} location A `string` representing the path to the commands folder.
+ * @param {string} location The path to the commands folder.
  * @param {Discord.Client|string} token A token to create a `Client` instance and login with, or a pre-existing `Client` instance to use.
  * @param {HandleOptions} options Options to use with the handle function.
  * @returns {Discord.Client}
@@ -372,7 +368,7 @@ handler.Promise = Promise;
 handler.Call = Call;
 handler.Prompt = Prompt;
 /**
- * A `Collection` of all current `Prompt` instances mapped by the user id.
+ * All current `Prompt` instances mapped by the user id.
  * @type {Discord.Collection}
  */
 handler.prompts = new Collection();
