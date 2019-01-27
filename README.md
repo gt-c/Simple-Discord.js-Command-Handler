@@ -89,7 +89,7 @@ Properties (static):
 - `Call` The [Call class](#call-class).
 - `Prompt` The [Prompt class](#prompt-class).
 - `prompts` A [Collection](https://discord.js.org/#/docs/main/stable/class/Collection) of all current [Prompt](#prompt-class) instances mapped by the user id.
-- `promptOptionsDefaults` The default prompt options. Adjusted purely for code convenience
+- `promptOptionsDefaults` The default prompt options. Adjusted purely for code convenience.
 
 <a id="handle-options"></a>
 
@@ -157,6 +157,7 @@ Properties:
 - `time` A number represing the amount of milliseconds to wait before ending the prompt from time. Defaults to `180000` or 3 minutes. Set this to 0 or `Infinity` for no time limit.
 - `messages` The amount of messages to accept before resolving the promise. Defaults to `1`.
 - `attempts` The amount of times the user is able to fail the filter before having the prompt cancelled. Defaults to `10`. You can set this to `0` or `Infinity` for infinite attempts permitted.
+- `channel` The channel to send the prompt to. Defaults to `this.message.channel`.
 
 Note: Setting the `time` option to Infinity is strongly disadvised, as it can cause confusion for the user, and may also cause the promise to never be [garbage collected](https://blog.codeship.com/understanding-garbage-collection-in-node-js/) if the prompt is never fulfilled.
 

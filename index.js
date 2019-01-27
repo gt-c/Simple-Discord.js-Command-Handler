@@ -237,7 +237,7 @@ class Call {
 			await this.message.channel.send(...(Array.isArray(msg) ? msg : [msg]));
 
 		return new handler.Promise((resolve, reject) => {
-			handler.prompts.set(this.message.author.id, new handler.Prompt(this.message.author, this.message.channel,
+			handler.prompts.set(this.message.author.id, new handler.Prompt(this.message.author, options.channel || this.message.channel,
 				options, resolve, reject));
 		});
 	}
