@@ -230,6 +230,8 @@ class Call {
 			options.filter = (m) => oldFilter.test(m.content);
 		else if (Array.isArray(oldFilter))
 			options.filter = (m) => oldFilter.includes(m.content.toLowerCase());
+		else if (typeof filter === 'number')
+			options.filter = (m) => m.content.length <= oldFilter;
 		else
 			options.filter = () => !!oldFilter;
 
@@ -275,6 +277,7 @@ function handler(location, token,
 		customPrefix = '!',
 		onError = (_, command, exc) => console.warn('The ' + command.id + ' command encountered an error:\n' + exc.stack),
 		editCategory = (category) => category.replace(/^./, (m) => m.toUpperCase()),
+
 		defaultCategory = 'Other',
 		loadCategories = true,
 		setCategoryProperty = true,
