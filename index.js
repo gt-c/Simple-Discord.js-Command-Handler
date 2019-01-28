@@ -230,7 +230,7 @@ class Call {
 			options.filter = (m) => oldFilter.test(m.content);
 		else if (Array.isArray(oldFilter))
 			options.filter = (m) => oldFilter.includes(m.content.toLowerCase());
-		else if (typeof filter === 'number')
+		else if (typeof oldFilter === 'number')
 			options.filter = (m) => m.content.length <= oldFilter;
 		else
 			options.filter = () => !!oldFilter;
