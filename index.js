@@ -232,6 +232,8 @@ class Call {
 			options.filter = (m) => oldFilter.includes(m.content.toLowerCase());
 		else if (typeof oldFilter === 'number')
 			options.filter = (m) => m.content.length <= oldFilter;
+		else if (typeof oldFilter === 'function')
+			options.filter = oldFilter;
 		else
 			options.filter = () => !!oldFilter;
 
