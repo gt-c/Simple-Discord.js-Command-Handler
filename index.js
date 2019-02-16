@@ -229,7 +229,7 @@ class Call {
 		if (oldFilter instanceof RegExp)
 			options.filter = (m) => oldFilter.test(m.content);
 		else if (Array.isArray(oldFilter))
-			options.filter = (m) => oldFilter.includes(m.content.toLowerCase());
+			options.filter = (m) => oldFilter.map((o) => o.toLowerCase()).includes(m.content.toLowerCase());
 		else if (typeof oldFilter === 'number')
 			options.filter = (m) => m.content.length <= oldFilter;
 		else if (typeof oldFilter === 'function')
@@ -306,7 +306,7 @@ function handler(location, token,
 	if (loadCategories === true)
 		for (let folder of fs.readdirSync(location))
 			if (fs.statSync(location + '/' + folder).isDirectory())
-				load(commands, location + '/' + folder, customProps, setCategoryProperty ? folder : false);
+				load(commands, location + '/' + folder, customProps, setCategoryProperty ? folder : false, editCategory);
 
 	client.on('message', async (message) => {
 		if (!(message instanceof Message) || (message.author.bot && !allowBots))
