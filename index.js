@@ -301,6 +301,8 @@ function handler(location, token,
 	let client = token instanceof Client ? token : new Client(clientOptions);
 	let commands = new Collection();
 
+	handler.commands = commands;
+
 	load(commands, location, customProps, setCategoryProperty ? defaultCategory : false, editCategory);
 
 	if (loadCategories === true)
@@ -372,6 +374,7 @@ function handler(location, token,
 handler.Promise = Promise;
 handler.Call = Call;
 handler.Prompt = Prompt;
+
 /**
  * All current `Prompt` instances mapped by the user id.
  * @type {Discord.Collection}
