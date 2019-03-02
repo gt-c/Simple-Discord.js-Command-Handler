@@ -361,10 +361,9 @@ function handler(location, token,
 
 		try {
 			let call = new handler.Call(message, command, commands, cut, args, prefixUsed, aliasUsed);
+			let result = getObjVal(command, customProps.exec)(call);
 
-			getObjVal(command, customProps.exec)(call);
-
-			commandEmitter.emit('commandUsed', call);
+			commandEmitter.emit('commandUsed', call, result);
 		} catch (exc) {
 			onError(message, command, exc);
 		}
