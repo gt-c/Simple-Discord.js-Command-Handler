@@ -287,7 +287,8 @@ function handler(location, token,
 		allowBots = false,
 		restrictedGuilds = [],
 		customProps = {},
-		clientOptions
+		clientOptions,
+		commandEmitter
 	} = {}) {
 
 	defaults(customProps, {
@@ -301,6 +302,7 @@ function handler(location, token,
 	let client = token instanceof Client ? token : new Client(clientOptions);
 	let commands = new Collection();
 
+	commandEmitter = commandEmitter || client;
 	handler.commands = commands;
 
 	load(commands, location, customProps, setCategoryProperty ? defaultCategory : false, editCategory);
@@ -358,7 +360,11 @@ function handler(location, token,
 		args.shift();
 
 		try {
-			getObjVal(command, customProps.exec)(new handler.Call(message, command, commands, cut, args, prefixUsed, aliasUsed));
+			let call = new handler.Call(message, command, commands, cut, args, prefixUsed, aliasUsed);
+
+			getObjVal(command, customProps.exec)(call);
+
+			commandEmitter.emit('commandUsed', call);
 		} catch (exc) {
 			onError(message, command, exc);
 		}
