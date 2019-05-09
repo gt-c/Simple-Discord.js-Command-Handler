@@ -234,8 +234,6 @@ class Call {
 			options.filter = (m) => m.content.length <= oldFilter;
 		else if (typeof oldFilter === 'function')
 			options.filter = oldFilter;
-		else
-			options.filter = () => !!oldFilter;
 
 		if (msg)
 			await (options.channel || this.message.channel).send(...(Array.isArray(msg) ? msg : [msg]));
