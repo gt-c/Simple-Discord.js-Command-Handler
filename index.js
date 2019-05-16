@@ -134,7 +134,7 @@ class Prompt {
 	 * @param {Discord.Message} message
 	 * @returns {any}
 	 */
-	addInput(message) {
+	async addInput(message) {
 		if (this.ended)
 			return;
 
@@ -145,11 +145,11 @@ class Prompt {
 			return this.end('cancelled');
 
 		// Add value to result.
-		if (this.options.filter(message, this))
+		if (await this.options.filter(message, this))
 			this.values.set(message.id, message);
 		// Corrects user on invalid input.
 		else
-			this.options.correct(message, this);
+			await this.options.correct(message, this);
 
 		// Resolve if messages required obtained.
 		if (this.values.size >= this.options.messages)
@@ -317,7 +317,7 @@ function handler(location, token,
 		let prompt = handler.prompts.get(message.author.id);
 
 		if (prompt && !prompt.invisible && prompt.channel.id === message.channel.id)
-			return prompt.addInput(message);
+			return await prompt.addInput(message);
 
 		let prefixes = await determinePrefix(message);
 		prefixes = (Array.isArray(prefixes) ? prefixes : [prefixes]).filter((p) => typeof p === 'string').map(escapeRegExpChars);
