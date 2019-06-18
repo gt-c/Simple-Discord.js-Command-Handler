@@ -69,6 +69,8 @@ function load(commands, path, customProps, category, editCategory) {
 					[]);
 			defObj(command, customProps.channels,
 				(channels) => ['any', 'dm', 'guild'].includes(channels) ? channels : 'any');
+			defObj(command, customProps.canUse,
+				(obj) => typeof obj === 'object' && obj !== null ? obj : {});
 
 			commands.set(id.toLowerCase(), command);
 		} catch (err) {
@@ -80,6 +82,12 @@ function load(commands, path, customProps, category, editCategory) {
 
 function escapeRegExpChars(text) {
 	return text.replace(/[|\\{}()[\]^$+*?.]/g, '\\$&');
+}
+
+function canUse(rules, message) {
+	return (!rules.users && !rules.roles) ||
+		rules.users.includes(message.author.id) ||
+		message.author.roles.some((r) => rules.roles.includes(r.id));
 }
 
 /**
@@ -293,7 +301,8 @@ function handler(location, token,
 		id: 'id',
 		exec: 'exec',
 		aliases: 'aliases',
-		channels: 'channels'
+		channels: 'channels',
+		canUse: 'canUse'
 	});
 
 	let determinePrefix = typeof customPrefix === 'function' ? customPrefix : () => customPrefix;
@@ -346,6 +355,11 @@ function handler(location, token,
 
 		if (command == null)
 			return;
+
+		let rules = getObjVal(command, customProps.canUse);
+
+		if (!canUse(rules, message))
+			return typeof rules.cant === 'function' ? rules.cant(message) : message.channel.send(rules.cant);
 
 		let channels = getObjVal(command, customProps.channels);
 
