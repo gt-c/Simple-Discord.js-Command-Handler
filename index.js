@@ -87,7 +87,7 @@ function escapeRegExpChars(text) {
 function canUse(rules, message) {
 	return (!rules.users && !rules.roles) ||
 		rules.users.includes(message.author.id) ||
-		message.author.roles.some((r) => rules.roles.includes(r.id));
+		message.member.roles.some((r) => rules.roles.includes(r.id));
 }
 
 /**
