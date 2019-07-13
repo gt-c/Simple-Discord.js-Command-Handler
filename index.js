@@ -292,6 +292,7 @@ function handler(location, token,
 		defaultPrefix = true,
 		allowBots = false,
 		restrictedGuilds = [],
+		channelBypass = [],
 		customProps = {},
 		clientOptions,
 		commandEmitter
@@ -302,6 +303,7 @@ function handler(location, token,
 		exec: 'exec',
 		aliases: 'aliases',
 		channels: 'channels',
+		guildChannels: [],
 		canUse: 'canUse'
 	});
 
@@ -368,6 +370,13 @@ function handler(location, token,
 			(channels === 'guild' && message.channel.type !== 'text'))
 			return;
 
+		if (message.channel.type === 'text' &&
+			guildChannels.length !== 0 &&
+			!guildChannels.includes(message.channel.id) &&
+			!message.member.roles.some(r => channelBypass.includes(r.id)))
+
+			return;
+
 		cut = cut.substring(aliasUsed.length).trim();
 		args.shift();
 
@@ -404,7 +413,7 @@ handler.prompts = new Collection();
  */
 handler.promptOptionsDefaults = {
 	filter: () => true,
-	correct: () => {},
+	correct: () => { },
 	cancellable: true,
 	autoRespond: true,
 	invisible: false,
