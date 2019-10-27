@@ -1,6 +1,6 @@
 const fs = require('fs');
 const Discord = require('discord.js');
-const { Client, Message, Collection } = Discord;
+const { Client, Collection } = Discord;
 
 /**
  * @typedef {object} Command
@@ -107,6 +107,9 @@ function canUse(rules, message) {
  * `Cancelled prompt.`, or when the max attempts are exceeded, `Too many attempts..` If disabled, you should probably handle this on the promise's
  * rejection.
  * @property {?boolean} invisible Whether or not the prompt is permitted to coexist with another prompt in the same channel.
+ * @property {?function(message: Discord.Message, prompt: Prompt): boolean} matchUntil Continues matching until the function provided returns true
+ * or when the amount of messages matched is equal to options.messages.
+ * @property {?boolean} addLastMatch Whether or not to add the message that triggered the `matchUntil` function to the end result.
  */
 
 /**
@@ -153,11 +156,20 @@ class Prompt {
 			return this.end('cancelled');
 
 		// Add value to result.
-		if (await this.options.filter(message, this))
+		if (await this.options.filter(message, this)) {
+			// If matchUntil function returns true
+			if (this.options.matchUntil && this.options.matchUntil(message, this)) {
+				if (this.options.addLastMatch)
+					this.values.set(message.id, message);
+
+				return this.end('success');
+			}
+
 			this.values.set(message.id, message);
 		// Corrects user on invalid input.
-		else
+		} else {
 			await this.options.correct(message, this);
+		}
 
 		// Resolve if messages required obtained.
 		if (this.values.size >= this.options.messages)
@@ -306,7 +318,7 @@ function handler(location, token,
 	});
 
 	let determinePrefix = typeof customPrefix === 'function' ? customPrefix : () => customPrefix;
-	let client = token instanceof Client ? token : new Client(clientOptions);
+	let client = typeof token === 'string' ? new Client(clientOptions) : token;
 	let commands = new Collection();
 
 	commandEmitter = commandEmitter || client;
@@ -320,7 +332,7 @@ function handler(location, token,
 				load(commands, location + '/' + folder, customProps, setCategoryProperty ? folder : false, editCategory);
 
 	client.on('message', async (message) => {
-		if (!(message instanceof Message) || (message.author.bot && !allowBots))
+		if (message.author.bot && !allowBots)
 			return;
 
 		let prompt = handler.prompts.get(message.author.id);
@@ -381,7 +393,7 @@ function handler(location, token,
 		}
 	});
 
-	if (!(token instanceof Client))
+	if (typeof token === 'string')
 		client.login(token);
 
 	return client;
@@ -407,6 +419,7 @@ handler.promptOptionsDefaults = {
 	correct: () => {},
 	cancellable: true,
 	autoRespond: true,
+	addLastMatch: false,
 	invisible: false,
 	time: 180000,
 	messages: 1,

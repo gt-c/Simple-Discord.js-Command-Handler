@@ -158,6 +158,8 @@ Properties:
 - `messages` The amount of messages to accept before resolving the promise. Defaults to `1`.
 - `attempts` The amount of times the user is able to fail the filter before having the prompt cancelled. Defaults to `10`. You can set this to `0` or `Infinity` for infinite attempts permitted.
 - `channel` The channel to send the prompt to. Defaults to `this.message.channel`.
+- `matchUntil` Causes the prompt to continue matching until the function provided returns true.
+- `addLastMatch` A boolean representing whether or not to add the message that triggered the `matchUntil` function to the end result. Defaults to `false`.
 
 Note: Setting the `time` option to Infinity is strongly disadvised, as it can cause confusion for the user, and may also cause the promise to never be [garbage collected](https://blog.codeship.com/understanding-garbage-collection-in-node-js/) if the prompt is never fulfilled.
 
