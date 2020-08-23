@@ -43,9 +43,9 @@ let types = {
 			c = c.toLowerCase();
 
 			return call.message.guild &&
-				call.message.guild.member(c.replace(/\D+/g, '')) ||
-				call.message.guild.members.find((m) => m.user.tag.toLowerCase() === c) ||
-				call.message.guild.members.find((m) => m.user.displayName === c);
+				call.message.guild.members.cache.get(c.replace(/\D+/g, '')) ||
+				call.message.guild.members.cache.find((m) => m.user.tag.toLowerCase() === c) ||
+				call.message.guild.members.cache.find((m) => m.user.displayName === c);
 		},
 		filter: (c, range) => {
 			return (!Array.isArray(range.ids) && !Array.isArray(range.roles)) ||
@@ -59,7 +59,7 @@ let types = {
 
 			let fetched = await call.client.fetchUser(c.replace(/\D+/g, '')).catch(() => null);
 
-			return fetched || call.client.users.find((u) => u.tag.toLowerCase() === c);
+			return fetched || call.client.users.cache.find((u) => u.tag.toLowerCase() === c);
 		},
 		filter: (c, range) => !Array.isArray(range.ids) || range.ids.includes(c.id)
 	}

@@ -54,7 +54,7 @@ function load(commands, path, customProps, category, editCategory) {
 function canUse(rules, message) {
 	return (!rules.users && !rules.roles) ||
 		(!!rules.users && rules.users.includes(message.author.id)) ||
-		(!!rules.roles && !!message.member && message.member.roles.some((r) => rules.roles.includes(r.id)));
+		(!!rules.roles && !!message.member && message.member.roles.cache.some((r) => rules.roles.includes(r.id)));
 }
 
 /**
