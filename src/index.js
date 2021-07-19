@@ -20,6 +20,9 @@ const Prompt = require('./structures/Prompt.js');
 function load(commands, path, customProps, category, editCategory) {
 	for (let file of fs.readdirSync(path)) {
 		try {
+			if (!file.endsWith('.js'))
+				continue;
+
 			let command = require(path + '/' + file);
 
 			let id = defObjVal(command, customProps.id, (id) => id || undefined);
@@ -45,8 +48,7 @@ function load(commands, path, customProps, category, editCategory) {
 
 			commands.set(id.toLowerCase(), command);
 		} catch (err) {
-			if (!err.message.startsWith('Cannot find module'))
-				console.warn(file + ' command failed to load.\n', err.stack);
+			console.warn(file + ' command failed to load.\n', err.stack);
 		}
 	}
 }
