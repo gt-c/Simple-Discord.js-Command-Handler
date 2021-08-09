@@ -50,7 +50,7 @@ class Prompt {
 		this.handler = handler;
 
 		if (options.time > 0 && options.time < Infinity)
-			this.user.client.setTimeout(this.end.bind(this, 'time'), options.time);
+			setTimeout(this.end.bind(this, 'time'), options.time);
 	}
 
 	/**

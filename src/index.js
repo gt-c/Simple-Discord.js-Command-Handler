@@ -13,7 +13,7 @@ const Prompt = require('./structures/Prompt.js');
  * @property {string} id
  * @property {function(call: Call): void} exec
  * @property {string[]} aliases
- * @property {'dm'|'guild'|'any'} channels
+ * @property {'DM'|'GUILD_TEXT'|'ANY'} channels
  * @property {?string} category
  */
 
@@ -40,7 +40,7 @@ function load(commands, path, customProps, category, editCategory) {
 					aliases.filter((alias) => typeof alias === 'string').map((alias) => alias.toLowerCase()) :
 					[]);
 			defObjVal(command, customProps.channels,
-				(channels) => ['any', 'dm', 'guild'].includes(channels) ? channels : 'any');
+				(channels) => ['ANY', 'DM', 'GUILD_TEXT'].includes(channels) ? channels : 'ANY');
 			defObjVal(command, customProps.canUse,
 				(obj) => typeof obj === 'object' && obj !== null ? obj : {});
 			defObjVal(command, customProps.cooldown,

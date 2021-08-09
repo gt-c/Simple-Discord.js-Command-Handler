@@ -63,7 +63,7 @@ class Call {
 			else if (typeof oldCorrect === 'function')
 				options.correct = (m) => m.channel.send(...options.formatCorrect(prompt, oldCorrect(m)));
 
-			if (msg[0]) {
+			if (msg) {
 				let failed = false;
 
 				await (options.channel || this.message.channel).send(msg).catch(() => {
