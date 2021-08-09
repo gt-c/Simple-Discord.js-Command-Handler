@@ -1,4 +1,6 @@
-## NOTICE: This version of d.js-command-handler is made to be compatible with discord.js v12 and onwards. If you are using discord.js v11, please refer to version 1.5.4.
+## NOTICE: This version of d.js-command-handler is made to be compatible with discord.js v13 and onwards.
+## If you are using discord.js v12, please refer to version 2.0.3.
+## If you are using discord.js v11, please refer to version 1.4.5.
 
 # Simple Discord.js Command Handler
 A quite simple command handler for the [discord.js](https://discord.js.org) dependency.

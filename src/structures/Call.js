@@ -54,7 +54,7 @@ class Call {
 			let prompt = new this.handler.Prompt(this.message.author, options.channel || this.message.channel, options,
 				resolve, reject, this.handler);
 
-			msg = options.formatTrigger(prompt, ...(Array.isArray(msg) ? msg : [msg]));
+			msg = options.formatTrigger(prompt, msg);
 
 			let oldCorrect = options.correct;
 
@@ -66,7 +66,7 @@ class Call {
 			if (msg[0]) {
 				let failed = false;
 
-				await (options.channel || this.message.channel).send(...msg).catch(() => {
+				await (options.channel || this.message.channel).send(msg).catch(() => {
 					prompt.end('trigger message failed to send');
 
 					failed = true;

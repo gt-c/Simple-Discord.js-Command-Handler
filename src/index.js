@@ -126,7 +126,7 @@ function handler(location, token,
 			if (fs.statSync(location + '/' + folder).isDirectory())
 				load(commands, location + '/' + folder, customProps, setCategoryProperty ? folder : false, editCategory);
 
-	client.on('message', async (message) => {
+	client.on('messageCreate', async (message) => {
 		if (message.author.bot && !allowBots)
 			return;
 
@@ -171,8 +171,8 @@ function handler(location, token,
 		let channels = getObjVal(command, customProps.channels);
 
 		if ((message.guild && restrictedGuilds.length > 0 && !restrictedGuilds.includes(message.guild.id)) ||
-			(channels === 'dm' && message.channel.type !== 'dm') ||
-			(channels === 'guild' && message.channel.type !== 'text'))
+			(channels === 'DM' && message.channel.type !== 'DM') ||
+			(channels === 'GUILD_TEXT' && message.channel.type !== 'GUILD_TEXT'))
 			return;
 
 		if (command.cooldown && command.cooldown.onCooldown(message.author.id))
