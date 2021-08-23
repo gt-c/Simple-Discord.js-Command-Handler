@@ -127,13 +127,16 @@ function handler(location, token,
 				load(commands, location + '/' + folder, customProps, setCategoryProperty ? folder : false, editCategory);
 
 	client.on('messageCreate', async (message) => {
+		if (message.channel.partial)
+			await message.channel.fetch();
+
 		if (message.author.bot && !allowBots)
 			return;
 
-		let prompt = handler.prompts.get(message.author.id);
+		let prompt = handler.prompts.find((p) => p.user.id === message.author.id && p.channel.id === message.channel.id);
 
-		if (prompt && !prompt.invisible && prompt.channel.id === message.channel.id)
-			return await prompt.addInput(message);
+		if (prompt)
+			return prompt.addInput(message);
 
 		let prefixes = await determinePrefix(message);
 		prefixes = (Array.isArray(prefixes) ? prefixes : [prefixes]).filter((p) => typeof p === 'string').map(escapeRegExpChars);
@@ -208,10 +211,10 @@ handler.Cooldown = Cooldown;
 handler.Prompt = Prompt;
 
 /**
- * All current `Prompt` instances mapped by the user id.
- * @type {Discord.Collection}
+ * All current `Prompt` instances.
+ * @type {Array<Prompt>}
  */
-handler.prompts = new Collection();
+handler.prompts = [];
 
 /**
  * The default prompt options. Adjusted purely for code convenience
@@ -220,12 +223,11 @@ handler.prompts = new Collection();
 handler.promptOptionsDefaults = {
 	filter: () => true,
 	correct: () => {},
-	formatCorrect: (_, ...args) => args,
-	formatTrigger: (_, ...args) => args,
+	formatCorrect: (_, arg) => arg,
+	formatTrigger: (_, arg) => arg,
 	cancellable: true,
 	autoRespond: true,
 	addLastMatch: false,
-	invisible: false,
 	time: 180000,
 	messages: 1,
 	attempts: 10

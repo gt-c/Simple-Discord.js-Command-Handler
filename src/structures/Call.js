@@ -28,7 +28,7 @@ class Call {
 
 	/**
 	 * Intentionally avoids `MessageCollector`'s so not to cause confusion to the developer if a possible `EventEmitter` memory leak occurs.
-	 * Note: To force cancel a prompt, do `handler.prompts.get('1234567890').end('cancelled')` where the parameter is the prompted user's id.
+	 * Note: To force cancel a prompt, do `<Prompt>.end('cancelled')`.
 	 * @param {?Discord.StringResolvable} msg The arguments you would supply to a `TextChannel#send` function. Can be an array of arguments or a
 	 * single argument.
 	 * @param {PromptOptions} options Options to customize the prompt with.
@@ -36,6 +36,9 @@ class Call {
 	 * passed all requirements.
 	 */
 	async prompt(msg, options = {}) {
+		if (this.handler.prompts.some((p) => p.user.id === this.message.author.id && p.channel.id === this.message.channel.id))
+			return this.message.channel.send('You already have a currently running prompt in this channel. Finish or cancel that prompt before running another');
+
 		defaults(options, this.handler.promptOptionsDefaults);
 
 		let oldFilter = options.filter;
@@ -59,9 +62,9 @@ class Call {
 			let oldCorrect = options.correct;
 
 			if (typeof oldCorrect === 'string')
-				options.correct = (m) => m.channel.send(...options.formatCorrect(prompt, oldCorrect));
+				options.correct = (m) => m.channel.send(options.formatCorrect(prompt, oldCorrect));
 			else if (typeof oldCorrect === 'function')
-				options.correct = (m) => m.channel.send(...options.formatCorrect(prompt, oldCorrect(m)));
+				options.correct = (m) => m.channel.send(options.formatCorrect(prompt, oldCorrect(m)));
 
 			if (msg) {
 				let failed = false;
@@ -76,7 +79,7 @@ class Call {
 					return;
 			}
 
-			this.handler.prompts.set(this.message.author.id, prompt);
+			this.handler.prompts.push(prompt);
 		});
 	}
 }

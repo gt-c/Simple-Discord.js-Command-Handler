@@ -16,7 +16,6 @@ const { Collection } = require('discord.js');
  * @property {?boolean} autoRespond Whether or not the bot should automatically respond when the prompt is cancelled/out of time with
  * `Cancelled prompt.`, or when the max attempts are exceeded, `Too many attempts..` If disabled, you should probably handle this on the promise's
  * rejection.
- * @property {?boolean} invisible Whether or not the prompt is permitted to coexist with another prompt in the same channel.
  * @property {?function(message: Discord.Message, prompt: Prompt): boolean} matchUntil Continues matching until the function provided returns true
  * or when the amount of messages matched is equal to options.messages.
  */
@@ -103,7 +102,11 @@ class Prompt {
 			return;
 
 		this.ended = true;
-		this.handler.prompts.delete(this.user.id);
+
+		let index = this.handler.prompts.findIndex((p) => p.user.id === this.user.id && p.channel.id === this.channel.id);
+
+		if (index !== -1)
+			this.handler.prompts.splice(index, 1);
 
 		// If permitted to respond.
 		if (this.options.autoRespond) {

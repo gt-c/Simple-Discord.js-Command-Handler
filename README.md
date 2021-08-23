@@ -92,7 +92,7 @@ Properties (static):
 - `Promise` The Promise class (purely for redefining and using a promise library different than the native js one, such as [bluebird](https://www.npmjs.com/package/bluebird)).
 - `Call` The [Call class](#call-class).
 - `Prompt` The [Prompt class](#prompt-class).
-- `prompts` A [Collection](https://discord.js.org/#/docs/main/stable/class/Collection) of all current [Prompt](#prompt-class) instances mapped by the user id.
+- `prompts` A array of all current [Prompt](#prompt-class) instances.
 - `promptOptionsDefaults` The default prompt options. Adjusted purely for code convenience.
 
 <a id="handle-options"></a>
@@ -147,7 +147,7 @@ Parameters:
 
 Returns: A collection of messages recieved by the user that passed all requirements.
 
-Note: To force cancel a prompt, do `handler.prompts.get('1234567890').end('cancelled')` where the parameter is the prompted user's id.
+Note: To force cancel a prompt, do `<Prompt>.end('cancelled')`.
 
 <a id="prompt-options"></a>
 
@@ -157,7 +157,6 @@ Properties:
 - `correct` A function called with the message and Prompt instance that should handle when a message does not pass the filter. Defaults to `() => {}`.
 - `cancellable` A boolean representing whether or not the user should be able to reply with `cancel` to cancel the ongoing prompt. Defaults to `true`.
 - `autoRespond` A boolean representing whether or not the bot should automatically respond when the prompt is cancelled/out of time with `Cancelled prompt.`, or when the max attempts are exceeded, `Too many attempts.`. If disabled, you should probably handle this on the promise's rejection. Defaults to `true`.
-- `invisible` A boolean representing whether or not the prompt is permitted to coexist with another prompt in the same channel. Defaults to `false`.
 - `time` A number represing the amount of milliseconds to wait before ending the prompt from time. Defaults to `180000` or 3 minutes. Set this to 0 or `Infinity` for no time limit.
 - `messages` The amount of messages to accept before resolving the promise. Defaults to `1`.
 - `attempts` The amount of times the user is able to fail the filter before having the prompt cancelled. Defaults to `10`. You can set this to `0` or `Infinity` for infinite attempts permitted.
