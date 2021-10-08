@@ -40,7 +40,7 @@ function load(commands, path, customProps, category, editCategory) {
 					aliases.filter((alias) => typeof alias === 'string').map((alias) => alias.toLowerCase()) :
 					[]);
 			defObjVal(command, customProps.channels,
-				(channels) => ['ANY', 'DM', 'GUILD_TEXT'].includes(channels) ? channels : 'ANY');
+				(channels) => channels || 'ANY');
 			defObjVal(command, customProps.canUse,
 				(obj) => typeof obj === 'object' && obj !== null ? obj : {});
 			defObjVal(command, customProps.cooldown,
@@ -175,7 +175,11 @@ function handler(location, token,
 
 		if (
 			(message.guild && restrictedGuilds.length > 0 && !restrictedGuilds.includes(message.guild.id)) ||
-			(channels === 'TEXT' ? !message.channel.isText() : message.channel.type !== channels)
+			(
+				channels === 'ANY' ? false
+					: channels === 'TEXT' ? !message.channel.isText()
+						: message.channel.type !== channels
+			)
 		)
 			return;
 
