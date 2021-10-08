@@ -1,3 +1,4 @@
+const { User } = require('discord.js');
 const { defaults } = require('../utils.js');
 
 /**
@@ -13,6 +14,67 @@ const { defaults } = require('../utils.js');
  * @property {string} cut The content of the message, excluding the prefix and alias used.
  */
 class Call {
+	/**
+	 * Runs a prompt for the provided user in the provided channel.
+	 * @param {PromptOptions} info Additionally should contain a `user` and `channel` property respectfully
+	 * @returns {Promise<Discord.Message|Discord.Collection<Discord.Snowflake, Discord.Message>>} A collection of messages recieved by the user that
+	 * passed all requirements.
+	 */
+	static async prompt({ message, user, channel, options = {} }) {
+		if (!channel)
+			throw new Error('Invalid channel provided.');
+
+		if (channel instanceof User)
+			channel = await channel.createDM();
+
+		if (Call.handler.prompts.some((p) => p.user.id === user.id && p.channel.id === channel.id)) {
+			channel.send('You already have a currently running prompt in this channel. Finish or cancel that prompt before running another');
+			throw new Error('Prompt ended: User already has a current prompt in this channel');
+		}
+
+		defaults(options, Call.handler.promptOptionsDefaults);
+
+		let oldFilter = options.filter;
+		options.rawFilter = oldFilter;
+
+		if (oldFilter instanceof RegExp)
+			options.filter = (m) => oldFilter.test(m.content);
+		else if (Array.isArray(oldFilter))
+			options.filter = (m) => oldFilter.map((o) => o.toLowerCase()).includes(m.content.toLowerCase());
+		else if (typeof oldFilter === 'number')
+			options.filter = (m) => !!m.content.length && m.content.length <= oldFilter;
+		else if (typeof oldFilter === 'function')
+			options.filter = oldFilter;
+
+		return new Call.handler.Promise(async (resolve, reject) => {
+			let prompt = new Call.handler.Prompt(user, channel, options, resolve, reject, Call.handler);
+
+			message = options.formatTrigger(prompt, message);
+
+			let oldCorrect = options.correct;
+
+			if (typeof oldCorrect === 'string')
+				options.correct = (m) => m.channel.send(options.formatCorrect(prompt, oldCorrect));
+			else if (typeof oldCorrect === 'function')
+				options.correct = (m) => m.channel.send(options.formatCorrect(prompt, oldCorrect(m)));
+
+			if (message) {
+				let failed = false;
+
+				await channel.send(message).catch(() => {
+					prompt.end('trigger message failed to send');
+
+					failed = true;
+				});
+
+				if (failed)
+					return;
+			}
+
+			Call.handler.prompts.push(prompt);
+		});
+	}
+
 	constructor(message, command, commands, cut, args, prefixUsed, aliasUsed, handler) {
 		this.message = message;
 		this.client = message.client;
@@ -35,52 +97,8 @@ class Call {
 	 * @returns {Promise<Discord.Message|Discord.Collection<Discord.Snowflake, Discord.Message>>} A collection of messages recieved by the user that
 	 * passed all requirements.
 	 */
-	async prompt(msg, options = {}) {
-		if (this.handler.prompts.some((p) => p.user.id === this.message.author.id && p.channel.id === this.message.channel.id))
-			return this.message.channel.send('You already have a currently running prompt in this channel. Finish or cancel that prompt before running another');
-
-		defaults(options, this.handler.promptOptionsDefaults);
-
-		let oldFilter = options.filter;
-		options.rawFilter = oldFilter;
-
-		if (oldFilter instanceof RegExp)
-			options.filter = (m) => oldFilter.test(m.content);
-		else if (Array.isArray(oldFilter))
-			options.filter = (m) => oldFilter.map((o) => o.toLowerCase()).includes(m.content.toLowerCase());
-		else if (typeof oldFilter === 'number')
-			options.filter = (m) => !!m.content.length && m.content.length <= oldFilter;
-		else if (typeof oldFilter === 'function')
-			options.filter = oldFilter;
-
-		return new this.handler.Promise(async (resolve, reject) => {
-			let prompt = new this.handler.Prompt(this.message.author, options.channel || this.message.channel, options,
-				resolve, reject, this.handler);
-
-			msg = options.formatTrigger(prompt, msg);
-
-			let oldCorrect = options.correct;
-
-			if (typeof oldCorrect === 'string')
-				options.correct = (m) => m.channel.send(options.formatCorrect(prompt, oldCorrect));
-			else if (typeof oldCorrect === 'function')
-				options.correct = (m) => m.channel.send(options.formatCorrect(prompt, oldCorrect(m)));
-
-			if (msg) {
-				let failed = false;
-
-				await (options.channel || this.message.channel).send(msg).catch(() => {
-					prompt.end('trigger message failed to send');
-
-					failed = true;
-				});
-
-				if (failed)
-					return;
-			}
-
-			this.handler.prompts.push(prompt);
-		});
+	prompt(message, options = {}) {
+		return Call.prompt({ message, user: this.message.author, channel: options.channel || this.message.channel, options });
 	}
 }
 

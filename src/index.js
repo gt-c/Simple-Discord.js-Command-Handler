@@ -173,9 +173,10 @@ function handler(location, token,
 
 		let channels = getObjVal(command, customProps.channels);
 
-		if ((message.guild && restrictedGuilds.length > 0 && !restrictedGuilds.includes(message.guild.id)) ||
-			(channels === 'DM' && message.channel.type !== 'DM') ||
-			(channels === 'GUILD_TEXT' && message.channel.type !== 'GUILD_TEXT'))
+		if (
+			(message.guild && restrictedGuilds.length > 0 && !restrictedGuilds.includes(message.guild.id)) ||
+			(channels === 'TEXT' ? !message.channel.isText() : message.channel.type !== channels)
+		)
 			return;
 
 		if (command.cooldown && command.cooldown.onCooldown(message.author.id))
@@ -209,6 +210,8 @@ handler.Arguments = Arguments;
 handler.Call = Call;
 handler.Cooldown = Cooldown;
 handler.Prompt = Prompt;
+
+Call.handler = handler;
 
 /**
  * All current `Prompt` instances.
